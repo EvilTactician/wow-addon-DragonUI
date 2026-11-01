@@ -54,6 +54,9 @@ function addon.core:OnInitialize()
         addon:ApplyDatabaseMigrations()
     end
 
+    -- Before anything is built, so the windows paint with the chosen skin's sheets.
+    addon.Skins.Apply()
+
     -- Register callbacks for configuration changes
     addon.db.RegisterCallback(addon, "OnProfileChanged", "RefreshConfig");
     addon.db.RegisterCallback(addon, "OnProfileCopied", "RefreshConfig");
