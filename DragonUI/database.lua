@@ -514,6 +514,7 @@ local defaults = {
         },
 
         style = {
+            skin = "forever", -- "forever" or "classic": art of the windows and controls (utils/skins.lua); needs a reload
             gryphons = 'new',
             gryphonScale = 1,
             gryphonOffsetX = 0,

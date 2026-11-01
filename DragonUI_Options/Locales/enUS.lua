@@ -48,6 +48,8 @@ L["Created and maintained by NeticSoul, with community contributions."] = true
 
 -- Language
 L["Language"] = true
+L["UI Skin"] = true
+L["Art of the windows and controls. The layouts and features stay the same.\n\nChanging skin requires a UI reload."] = true
 L["Choose the language used by the DragonUI interface."] = true
 L["Follow the client language"] = true
 L["Number Abbreviations"] = true

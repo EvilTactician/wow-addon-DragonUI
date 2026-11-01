@@ -1008,6 +1008,7 @@ local function BuildUnitframesTab(scroll)
         desc = LO["Art of the player, target, focus, ToT, ToF, pet and party frames."],
         dbPath = "unitframe.frame_style",
         values = frameStyleValues,
+        disabled = function() return addon.Skins.Current() == "classic" end,
         callback = refreshLevelStyle,
     })
     C:AddDropdown(style, {

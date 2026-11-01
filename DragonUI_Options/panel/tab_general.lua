@@ -376,6 +376,25 @@ local function BuildGeneralTab(scroll)
     C:AddSpacer(scroll)
 
     -- ====================================================================
+    -- UI SKIN
+    -- ====================================================================
+    local skinSection = C:AddSection(scroll, LO["UI Skin"])
+
+    C:AddDropdown(skinSection, {
+        label = LO["UI Skin"],
+        desc = LO["Art of the windows and controls. The layouts and features stay the same.\n\nChanging skin requires a UI reload."],
+        values = {
+            forever = LO["Forever"],
+            classic = LO["Classic"],
+        },
+        width = 200,
+        getFunc = function() return addon.Reload.Get("style.skin") end,
+        setFunc = function(val) addon.Reload.Stage("style.skin", val) end,
+    })
+
+    C:AddSpacer(scroll)
+
+    -- ====================================================================
     -- UI SCALE
     -- ====================================================================
     local UIScale = addon.UIScale

@@ -424,6 +424,10 @@ local function UnitFrameConfig()
 end
 
 function UF.GetFrameStyle()
+    -- The Classic skin's frames are baked on Forever's geometry and swapped in by path (utils/skins.lua).
+    if addon.Skins.Current() == "classic" then
+        return "forever"
+    end
     local config = UnitFrameConfig()
     local key = config and config.frame_style
     return UF.SKINS[key] and key or "dragonui"

@@ -32,6 +32,7 @@ were obtained via. They are credited as conduits, not as the authors of the art.
 | `ClassIcons/` | retail class icon art (source file not recorded) |
 | `Coins/` | DragonflightUI (`commoncoinbox`, `commoncurrencybox`); the coins are retail art |
 | `Collections/` | see [Collections artwork](#collections-artwork) |
+| `Skins/Classic/` | baked by `tools/build_classic_skin.py` from 3.3.5a client art, and greyed copies of the Forever, talent, spellbook and professions sheets |
 | `Merchant/` | DragonUI_NewEra; `emptyslot.blp` is the 3.3.5a client's own |
 | `Micromenu/` | DragonflightUI, pretty_actionbar; `dragonbreath.tga` is the dragon head of `UnitFrames/Forever/uiunitframeboss2x` (WoW Forever's elite dragon sheet) with its jaw re-posed, plus two generated fire sprites |
 | `Minimap/` | pretty_minimap (s0h2x), RetailUI (`Calendar`, `GuildBanner`, `MinimapBorder`); `collector_toggle.tga` is cropped from the retail minimap border in `UI/Minimap.blp`; `forever_*` cut from WoW Forever's minimap sheets (`uiminimap2xc60`, `uiminimapmaskgeneralc60`) |
