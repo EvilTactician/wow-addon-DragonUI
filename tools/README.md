@@ -21,6 +21,7 @@ lua5.1 tools/profile_actions_test.lua
 lua5.1 tools/raid_browser_skin_test.lua
 lua5.1 tools/shadowuf_handoff_test.lua
 lua5.1 tools/tooltip_cursor_test.lua
+lua5.1 tools/tracker_quest_click_test.lua
 python3 tools/recolour_grounds.py --check
 python3 tools/link_icon_bubble.py --check
 ```
@@ -60,3 +61,4 @@ Measure behavioral line coverage with Lua/luac 5.1:
 See `coverage-baseline.json` for the measured baseline and the integration report
 for remaining gaps; this is not full line or branch coverage.
 The loot triage test covers ranking by stack value (cheapest first, the marks cap, greens only at quality 2, consumables only when allowed), the items never suggested (crafting materials, recipes, Mining Pick, fishing pole, Hearthstone, quest items, unsellable items), the static and pulsing border, the Alt + Right Click star (not Alt + Left, not with the auction house open, not when bag sort locks with Alt + Right Click) and the next item moving up, the loot coins (dear loot and quest items only), and when marks show: while the loot will not fit, at 4 or fewer free slots, always, or never.
+The tracker quest click test covers a tracked quest's click (and the menu's View in Quest Log and a quest timer) opening the world map's quest log on that quest's page, showing a hidden panel for it, and falling back to the stock quest log with the map module off, the map closed or the panel hidden in combat, or no quest ID. It does not open the map in a game client.

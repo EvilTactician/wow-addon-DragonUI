@@ -244,9 +244,29 @@ end
 -- INTERACTION
 -- ============================================================================
 
+-- Our map's quest log is the quest window, as on retail: the map opens on the quest's own page.
+-- False hands the click to the stock log: map module off, or a closed map (or panel) in combat.
+local function openMapQuestTo(index)
+    local worldMap = addon.WorldMap
+    if not (worldMap and worldMap.IsApplied and worldMap.IsApplied() and worldMap.ShowQuestDetail) then
+        return false
+    end
+    local questID = select(9, GetQuestLogTitle(index))
+    if not questID or questID == 0 then return false end
+    -- The panel can make the window wider, which is protected, so a hidden one stays the stock log's.
+    if InCombatLockdown() and not worldMap.PanelShown() then return false end
+    if not worldMap.OpenToQuest(questID) then return false end
+    if not worldMap.PanelShown() then worldMap.SetPanelShown(true) end
+    QP.SetFocus(questID)
+    worldMap.ShowQuestDetail(index)
+    if worldMap.FlashQuestPOI then worldMap.FlashQuestPOI(questID) end
+    return true
+end
+
 -- QuestLog_OpenToQuest writes QuestLogFrame.selectedIndex, read on line 1 of Show Map's OnClick.
 local function openQuestLogTo(index)
     if not (index and index > 0) then return end
+    if openMapQuestTo(index) then return end
     SelectQuestLogEntry(index)
     -- QuestLog_Update returns early while the frame is hidden, so the open has to do the redraw.
     if QuestLogFrame:IsShown() then QuestLog_Update() else ShowUIPanel(QuestLogFrame) end
