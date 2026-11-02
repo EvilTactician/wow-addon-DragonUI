@@ -389,10 +389,13 @@ def keep(im, test):
     return im
 
 
-# Rows and columns of the title bar in ui-character-general-topleft: its rim, its lower rail, the first
+# Rows and columns of the title bar in ui-character-general-topleft: its lower rail, the first
 # column the ring's shadow has left, and the 128 columns that tile (they run into the top right piece).
-BAND_RIM, BAND_RAIL, BAND_CLEAN, BAND_TILE = 13, 33, 80, 128
+BAND_RAIL, BAND_CLEAN, BAND_TILE = 33, 80, 128
 BLEED = 3
+# The top right piece mirrored: this many columns put its outer rail on the left rail's. CORNER_END is the sheet
+# column, clear of the close box's far side, where that corner gives way to the band.
+MIRROR_SHIFT, CORNER_END = 23, 46
 
 
 def bleed_sideways(sheet, box):
@@ -419,9 +422,10 @@ def build_frame(stock):
     band_y, band_end = 6, 38
     # Left rail: stock 12..17 lands on 26..37. Right rail: stock 87..92 lands on 175..186.
     left_x, right_x = 2, 1
-    last = bl.getchannel("A").point(lambda v: 255 if v > 8 else 0).crop((100, 0, 101, 256)).getbbox()[3] - 1
-    # Bottom rail: the last six stock rows, inner edge on 55 in a corner's 80-tall rect.
-    rail_top = last - 5
+    edge = bl.getchannel("A").crop((100, 0, 101, 256))
+    last = edge.point(lambda v: 255 if v > 8 else 0).getbbox()[3] - 1
+    # Bottom rail: the last six solid stock rows, inner edge on 55 in a corner's 80-tall rect. Its shadow hangs below.
+    rail_top = edge.point(lambda v: 255 if v > 200 else 0).getbbox()[3] - 6
     corner_y = 55 - 2 * rail_top
 
     def band(x, y):
@@ -476,26 +480,39 @@ def build_frame(stock):
     sheet.paste(fade_under_band(keep(mapped(tile, (202, 268, 458, 458), 2, 0, 2, band_y), band), band_y), (202, 268))
 
     # Corners. Top right keeps the stock close box the band's close button sits in.
+    # Right-rail mappings start a column before the stock piece: that column repeats the first one, or the band shows a gap there.
     sheet.paste(fade_under_band(keep(mapped(tr, (664, 268, 854, 364), 2, right_x, 2, band_y),
                                      lambda x, y: band(x, y) or right_rail(x, y)), band_y, right_rail), (664, 268))
+    sheet.paste(sheet.crop((665, 268, 666, 364)), (664, 268))
+    # Stock's rail is dark beside its toolbar stone; here the same straight run as below meets the band.
+    straight = keep(mapped(tr, (664, 268, 854, 364), 2, right_x, 2, -200),
+                    lambda x, y: right_rail(x, y) and (y - band_y) // 2 >= BAND_RAIL + 4)
+    sheet.paste(straight, (664, 268), straight.getchannel("A"))
     sheet.paste(keep(mapped(bl, (664, 124, 854, 204), 2, left_x, 2, corner_y),
-                     lambda x, y: left_rail(x, y) or bottom_rail(y, corner_y)), (664, 124))
+                     lambda x, y: left_rail(x, y) or (bottom_rail(y, corner_y) and x >= 26)), (664, 124))
     sheet.paste(keep(mapped(br, (4, 388, 194, 468), 2, right_x, 2, corner_y),
-                     lambda x, y: right_rail(x, y) or bottom_rail(y, corner_y)), (4, 388))
+                     lambda x, y: right_rail(x, y) or (bottom_rail(y, corner_y) and x <= 186)), (4, 388))
+    sheet.paste(sheet.crop((5, 388, 6, 468)), (4, 388))
 
-    # Top left has no stock counterpart without the ring: the band and left rail, cut to Forever's chamfer.
-    # The rail starts at the band's rim and the band at the rail, so neither pokes past the other.
-    rim = band_y + 2 * BAND_RIM
+    # Top left has no stock counterpart without the ring: the top right's outer corner mirrored onto the
+    # left rail, then the band from inside that corner's rim, and the left rail from under the band.
+    rim = keep(mapped(ImageOps.mirror(tr), (0, 0, 190, 96), 2, left_x - 2 * MIRROR_SHIFT, 2, band_y),
+               lambda x, y: x < CORNER_END and (y - band_y) // 2 <= BAND_RAIL)
+    alpha = rim.getchannel("A").load()
+    def inside_rim(x, y):
+        if (y - band_y) // 2 > BAND_RAIL:
+            return x >= 26
+        return any(alpha[column, y] > 200 for column in range(26, min(x, CORNER_END - 1) + 1))
     corner = fade_under_band(keep(mapped(corner_band, (0, 0, 190, 96), 2, 0, 2, band_y),
-                                  lambda x, y: band(x, y) and x >= 26), band_y)
-    rail = keep(mapped(tl, (0, 0, 190, 96), 2, left_x, 2, -200), lambda x, y: left_rail(x, y) and y >= rim)
-    corner.alpha_composite(rail)
-    chamfer = forever.crop((466, 268, 656, 364)).getchannel("A").point(lambda v: 255 if v > 200 else 0)
-    corner.putalpha(Image.composite(corner.getchannel("A"), Image.new("L", corner.size, 0), chamfer))
+                                  lambda x, y: band(x, y) and inside_rim(x, y)), band_y)
+    corner.alpha_composite(rim)
+    rail_from = band_y + 2 * (BAND_RAIL + 1)
+    corner.alpha_composite(keep(mapped(tl, (0, 0, 190, 96), 2, left_x, 2, -200), lambda x, y: left_rail(x, y) and y >= rail_from))
     sheet.paste(corner, (466, 268))
 
     # Filtering reads past a rect's edge: the sheet's clear neighbours showed as a line at every join.
-    for box in ((202, 268, 458, 458), (466, 268, 656, 364), (664, 268, 854, 364), (400, 4, 656, 204)):
+    for box in ((202, 268, 458, 458), (466, 268, 656, 364), (664, 268, 854, 364), (400, 4, 656, 204),
+                (664, 124, 854, 204), (4, 388, 194, 468)):
         bleed_sideways(sheet, box)
     for box in ((4, 4, 194, 260), (202, 4, 392, 260)):
         bleed_upright(sheet, box)
@@ -524,9 +541,10 @@ def paste_scaled(sheet, im, rect):
 def build_buttons(stock):
     states = {name: load(stock / f"buttons/ui-panel-button-{name}.blp") for name in ("up", "down", "disabled")}
     glow = load(stock / "buttons/ui-panel-button-highlight.blp").crop((0, 0, 80, 22))
-    close = {name: load(stock / f"buttons/ui-panel-minimizebutton-{name}.blp").crop((6, 7, 25, 25))
+    # Square, 19 by 19 with one clear row: the seat in utils/skins.lua draws it at stock size in the stock socket.
+    close = {name: load(stock / f"buttons/ui-panel-minimizebutton-{name}.blp").crop((6, 7, 25, 26))
              for name in ("up", "down", "disabled")}
-    close_glow = load(stock / "buttons/ui-panel-minimizebutton-highlight.blp").crop((6, 7, 25, 25))
+    close_glow = load(stock / "buttons/ui-panel-minimizebutton-highlight.blp").crop((6, 7, 25, 26))
 
     # utils/redbutton.lua: caps and middles per state, and the highlight strip of 221 across.
     sheet = load(ROOT / "UI" / "redbutton3slice.tga")
@@ -584,6 +602,25 @@ def build_tabs(stock):
     save_tga(sheet, OUT / "uiframetabs.tga")
 
 
+def plain_inset_corners(sheet):
+    """Stock has no filigree: the inset trim's corners become its edges' rail, mitred across a small chamfer."""
+    left, top, right, bottom, cut = 4, 4, 218, 218, 52
+    px = sheet.load()
+    mid_x, mid_y = (left + right) // 2, (top + bottom) // 2
+    profiles = {"top": [px[mid_x, top + d] for d in range(cut)], "bottom": [px[mid_x, bottom - 1 - d] for d in range(cut)],
+                "left": [px[left + d, mid_y] for d in range(cut)], "right": [px[right - 1 - d, mid_y] for d in range(cut)]}
+    # The rail starts this far in, and the corner's chamfer is measured from there.
+    start = next(d for d, pixel in enumerate(profiles["top"]) if pixel[3] > 128)
+    for y in range(cut):
+        for x in range(cut):
+            depth = min(x, y, (x + y - start - 6) * 0.7071 + start)
+            for flip_x, flip_y, side_x, side_y in ((0, 0, "left", "top"), (1, 0, "right", "top"),
+                                                   (0, 1, "left", "bottom"), (1, 1, "right", "bottom")):
+                profile = profiles[side_x if x < y else side_y]
+                pixel = profile[int(depth)] if depth >= 0 else (0, 0, 0, 0)
+                px[(right - 1 - x) if flip_x else (left + x), (bottom - 1 - y) if flip_y else (top + y)] = pixel
+
+
 def build_ring(stock):
     """Professions sheet in grey metal with the stock portrait ring in the bronze ring's rect."""
     tl = load(stock / "paperdollinfoframe/ui-character-general-topleft.blp")
@@ -601,6 +638,7 @@ def build_ring(stock):
             if inner <= r <= outer and 0 <= sx < 256 and 0 <= sy < 256:
                 dst[x, y] = src[int(sx), int(sy)]
     sheet.paste(ring, box[:2])
+    plain_inset_corners(sheet)
     save_tga(sheet, OUT / "ProfessionsUI.tga")
 
 

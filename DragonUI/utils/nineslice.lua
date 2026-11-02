@@ -246,8 +246,9 @@ end
 -- at (2, 16). Measured from chrome-frame.tga, the rails' inner edges run 4.5 in from the left and
 -- bottom and 5.5 in from the right, and the band's open stone runs 2 to 20 below the top. A 16 close
 -- button at (-6.5, -3) leaves 1 unit of stone above, below and right of it; the 24 it used to be
--- rode over the rails. Bottom-row buttons and insets keep `gap` inside the rails.
-local seat = { closeSize = 16, closeX = -6.5, closeY = -3, left = 4.5, right = -5.5, bottom = 4.5, gap = 3 }
+-- rode over the rails. A button beside it stands closeGap clear. A UI skin whose band differs replaces
+-- the close fields (utils/skins.lua). Bottom-row buttons and insets keep `gap` inside the rails.
+local seat = { closeSize = 16, closeX = -6.5, closeY = -3, closeGap = 2, left = 4.5, right = -5.5, bottom = 4.5, gap = 3 }
 seat.buttonLeft = seat.left + seat.gap
 seat.buttonRight = seat.right - seat.gap
 seat.buttonBottom = seat.bottom + seat.gap

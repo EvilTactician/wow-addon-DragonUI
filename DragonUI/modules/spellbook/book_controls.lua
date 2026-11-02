@@ -491,10 +491,10 @@ end
 
 local function buildModeButton(root)
     modeButton = CreateFrame("Button", nil, root)
-    -- The close button's size, two units left of its seat (as on the world map).
+    -- The close button's size, just left of its seat (as on the world map).
     local seat = addon.WindowSeat
     modeButton:SetSize(seat.closeSize, seat.closeSize)
-    modeButton:SetPoint("TOPRIGHT", root, "TOPRIGHT", seat.closeX - seat.closeSize - 2, seat.closeY)
+    modeButton:SetPoint("TOPRIGHT", root, "TOPRIGHT", seat.closeX - seat.closeSize - seat.closeGap, seat.closeY)
     modeButton:SetFrameLevel(Book.Level("buttons"))
     -- Every state needs a texture object before SetAtlasTexture can dress it.
     local sheet = addon.atlasinfo["redbutton-highlight"][1]

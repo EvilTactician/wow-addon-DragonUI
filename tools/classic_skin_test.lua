@@ -68,7 +68,7 @@ local function loadSkins(skin)
     local other = setmetatable({ path = DIR .. [[UI\something-else]] }, getmetatable(painted))
     frames[1] = setmetatable({ regions = { painted, other } }, { __index = { GetRegions = function(self) return unpack(self.regions) end } })
 
-    local addon = { _dir = DIR, db = { profile = { style = { skin = skin } } } }
+    local addon = { _dir = DIR, db = { profile = { style = { skin = skin } } }, WindowSeat = { closeSize = 16, closeX = -6.5, closeY = -3, closeGap = 2, left = 4.5 } }
     assert(loadfile("DragonUI/utils/skins.lua"))("DragonUI", addon)
     addon.Skins.Apply()
     return addon, painted, other
@@ -81,6 +81,7 @@ do
     assert(addon.Skins.Current() == "forever")
     assert(addon.Skins.Path(ROCK) == ROCK)
     assert(painted.path == ROCK, "default skin must not sweep")
+    assert(addon.WindowSeat.closeSize == 16, "default skin keeps the band's close seat")
 end
 
 -- An unknown or missing setting falls back the same way.
@@ -115,6 +116,10 @@ do
         button:SetNormalTexture(ROCK)
         assert(button:GetNormalTexture():GetTexture() == CLASSIC_ROCK, kind .. " setter swapped")
     end
+
+    -- The close button moves into the stock band's socket; the rest of the seat stays.
+    assert(addon.WindowSeat.closeSize == 19 and addon.WindowSeat.closeX == -1.5 and addon.WindowSeat.closeY == -2)
+    assert(addon.WindowSeat.left == 4.5, "only the close fields change")
 
     -- Read once per load: a later Apply must not stack hooks.
     local count = hooks
