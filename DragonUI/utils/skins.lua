@@ -66,6 +66,8 @@ local SKINS = {
 			["XP\\Overlay_r"] = "XP\\Overlay_r",
 			["XP\\uiexperiencebar"] = "XP\\uiexperiencebar",
 			["Micromenu\\uimicromenu2x"] = "Micromenu\\uimicromenu2x",
+			["Micromenu\\micropvp"] = "Micromenu\\micropvp",
+			["Professions\\MicroButton"] = "Micromenu\\MicroButton",
 			-- The decorated windows.
 			["Talents\\talents-sheet"] = "Talents\\talents-sheet",
 			["Talents\\talentframeatlas"] = "Talents\\talentframeatlas",
