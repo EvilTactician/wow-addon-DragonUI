@@ -186,6 +186,9 @@ def build_unit_frames(stock):
     save_tga(silver(badge), OUT / "UnitFrames" / "pvpforever.tga")
 
 
+SQUARE_LINE_SHADE = 0.65
+
+
 def build_minimap(stock):
     source = load(stock / "minimap/ui-minimap-border.blp")
     ring = StockRing(source, 167.5, 104.5, 62.5, 72.0, (120, 240))
@@ -193,20 +196,23 @@ def build_minimap(stock):
     cx, cy, inner, outer = find_ring(im)
     grey_all(im)
     save_tga(paint_ring(im, ring, cx, cy, inner, outer), OUT / "Minimap" / "forever_circle.tga")
+    # DragonUI's ring is a thin line with gold pips: the stock ring replaces all of it, from the line's
+    # inner edge outwards, measured on a diagonal where no pip lies.
     im = load(ROOT / "Minimap" / "uiminimapborder.tga")
-    grey_all(im)
-    px = im.load()
-    # This one is a thin line with gold pips: found by the line's own extent.
-    alpha = [x for x in range(im.size[0]) if px[x, im.size[1] // 2][3] > 120]
     cx, cy = im.size[0] / 2 - 0.5, im.size[1] / 2 - 0.5
-    line = [x for x in alpha if 0 < x < cx - 8]
-    if line:
-        outer = cx - min(line) + 1.5
-        paint_ring(im, ring, cx, cy, outer - 8, outer)
-    save_tga(im, OUT / "Minimap" / "uiminimapborder.tga")
+    px = im.load()
+    along = [r for r in range(int(cx)) if px[round(cx + r * 0.7071), round(cy + r * 0.7071)][3] > 120]
+    inner = min(along)
+    blank = Image.new("RGBA", im.size, (0, 0, 0, 0))
+    # Its mask keeps the pips, so the ring has to reach past them or the map shows outside it.
+    outer = cx - 1
+    save_tga(paint_ring(blank, ring, cx, cy, inner, outer), OUT / "Minimap" / "uiminimapborder.tga")
     for name in ("forever_pointer.tga", "forever_square_frame.tga", "forever_square_frame_rounded.tga",
-                 "forever_square_pointer.tga", "uiminimapsquareborder.tga"):
+                 "forever_square_pointer.tga"):
         save_tga(grey_all(load(ROOT / "Minimap" / name)), OUT / "Minimap" / name)
+    # A white line on Forever's dark pips reads far brighter than any stock metal.
+    save_tga(grey_all(load(ROOT / "Minimap" / "uiminimapsquareborder.tga"), SQUARE_LINE_SHADE),
+             OUT / "Minimap" / "uiminimapsquareborder.tga")
 
 
 def build_castbar(stock):
@@ -277,29 +283,83 @@ def build_xp():
     save_tga(sheet, OUT / "XP" / "uiexperiencebar.tga")
 
 
-# Micro menu cells with a stock button. The rest (Shop, Collections and the like) have no stock art.
+# Micro menu cells with a stock button.
 MICRO_BUTTONS = {"Achievements": "achievement", "GameMenu": "mainmenu", "Groupfinder": "lfg", "GuildCommunities": "socials",
                  "Questlog": "quest", "SpecTalents": "talents", "SpellbookAbilities": "spellbook", "Professions": "abilities",
                  "Challenges": "world"}
+# The rest have no stock icon, so theirs stands on the blank stock button: otherwise they float beside framed ones.
+MICRO_ON_BLANK = ("Shop", "Collections")
+MICRO_ICON_FILL = 0.62  # of the button's width, what the stock icons take
+MICRO_GROUND_CELLS = {"up": (0.0654297, 0.12793, 0.330078, 0.490234), "down": (0.0654297, 0.12793, 0.494141, 0.654297)}
+
+
+def opaque_box(im):
+    return im.getchannel("A").point(lambda v: 255 if v > 8 else 0).getbbox()
+
+
+def blank_micro_button(stock, state):
+    """The stock Character button, the only one without an icon: it has no disabled state of its own."""
+    art = load(stock / f"buttons/ui-microbuttoncharacter-{'down' if state == 'down' else 'up'}.blp")
+    art = art.crop(opaque_box(art))
+    return grey_all(art, 0.6) if state == "disabled" else art
+
+
+def icon_on_blank(stock, state, icon, size):
+    """`icon` centred on the blank button, both scaled to a cell of `size`."""
+    cell = blank_micro_button(stock, state).resize(size, Image.LANCZOS)
+    icon = icon.crop(opaque_box(icon))
+    scale = size[0] * MICRO_ICON_FILL / icon.size[0]
+    fit = icon.resize((round(icon.size[0] * scale), round(icon.size[1] * scale)), Image.LANCZOS)
+    cell.alpha_composite(fit, ((size[0] - fit.size[0]) // 2, (size[1] - fit.size[1]) // 2))
+    return cell
 
 
 def build_micro(stock):
     source = (ROOT.parent / "modules" / "micromenu.lua").read_text(encoding="utf-8")
-    sheet = load(ROOT / "Micromenu" / "uimicromenu2x.blp")
+    forever = load(ROOT / "Micromenu" / "uimicromenu2x.blp")
+    sheet = forever.copy()
     w, h = sheet.size
     states = {"Up": "up", "Mouseover": "up", "Down": "down", "Disabled": "disabled"}
     pattern = r'\["UI-HUD-MicroMenu-(\w+)-(Up|Down|Mouseover|Disabled)"\] = \{([\d.]+), ([\d.]+), ([\d.]+), ([\d.]+)\}'
     for name, state, left, right, top, bottom in re.findall(pattern, source):
+        box = (round(float(left) * w), round(float(top) * h), round(float(right) * w), round(float(bottom) * h))
+        if name in MICRO_ON_BLANK:
+            art = icon_on_blank(stock, states[state], forever.crop(box), (box[2] - box[0], box[3] - box[1]))
+            sheet.paste((0, 0, 0, 0), box)
+            sheet.paste(art, box[:2])
+            continue
         stem = MICRO_BUTTONS.get(name)
         art_path = stem and stock / f"buttons/ui-microbutton-{stem}-{states[state]}.blp"
         if not art_path or not art_path.exists():
             continue
         art = load(art_path)
         art = art.crop(art.getchannel("A").point(lambda v: 255 if v > 8 else 0).getbbox())
-        box = (round(float(left) * w), round(float(top) * h), round(float(right) * w), round(float(bottom) * h))
         sheet.paste((0, 0, 0, 0), box)
         paste_scaled(sheet, art, box)
+    # The cells micromenu.lua lays behind the portrait and the PvP crest.
+    for state, (left, right, top, bottom) in MICRO_GROUND_CELLS.items():
+        box = (round(left * w), round(top * h), round(right * w), round(bottom * h))
+        sheet.paste((0, 0, 0, 0), box)
+        paste_scaled(sheet, blank_micro_button(stock, state), box)
     save_tga(sheet, OUT / "Micromenu" / "uimicromenu2x.tga")
+
+    # micromenu.lua's Professions row: up, down, mouseover, disabled.
+    hammers = load(ROOT / "Professions" / "MicroButton.tga")
+    for column, state in enumerate(("up", "down", "up", "disabled")):
+        box = (column * 64, 0, (column + 1) * 64, 82)
+        art = icon_on_blank(stock, state, hammers.crop(box), (64, 82))
+        hammers.paste((0, 0, 0, 0), box)
+        hammers.paste(art, box[:2])
+    save_tga(hammers, OUT / "Micromenu" / "MicroButton.tga")
+
+    # SetupPVPButton's two faction cells.
+    pvp = load(ROOT / "Micromenu" / "micropvp.blp")
+    for column in range(2):
+        box = (column * 118, 0, (column + 1) * 118, 151)
+        art = icon_on_blank(stock, "up", pvp.crop(box), (118, 151))
+        pvp.paste((0, 0, 0, 0), box)
+        pvp.paste(art, box[:2])
+    save_tga(pvp, OUT / "Micromenu" / "micropvp.tga")
 
 
 def mapped(stock, box, sx, ox, sy, oy):
@@ -327,6 +387,24 @@ def keep(im, test):
             if not test(x, y):
                 px[x, y] = (0, 0, 0, 0)
     return im
+
+
+# Rows and columns of the title bar in ui-character-general-topleft: its rim, its lower rail, the first
+# column the ring's shadow has left, and the 128 columns that tile (they run into the top right piece).
+BAND_RIM, BAND_RAIL, BAND_CLEAN, BAND_TILE = 13, 33, 80, 128
+BLEED = 3
+
+
+def bleed_sideways(sheet, box):
+    left, top, right, bottom = box
+    for x, source in [(left - i, left) for i in range(1, BLEED + 1)] + [(right - 1 + i, right - 1) for i in range(1, BLEED + 1)]:
+        sheet.paste(sheet.crop((source, top, source + 1, bottom)), (x, top))
+
+
+def bleed_upright(sheet, box):
+    left, top, right, bottom = box
+    for y, source in [(top - i, top) for i in range(1, BLEED + 1)] + [(bottom - 1 + i, bottom - 1) for i in range(1, BLEED + 1)]:
+        sheet.paste(sheet.crop((left, source, right, source + 1)), (left, y))
 
 
 def build_frame(stock):
@@ -358,6 +436,36 @@ def build_frame(stock):
     def bottom_rail(y, oy):
         return rail_top <= (y - oy) // 2 <= last
 
+    # What shows under the title's lower rail fades out, as Forever's shadow does, instead of ending on stock's stone.
+    def fade_under_band(im, oy, spared=lambda x, y: False):
+        px = im.load()
+        for y in range(im.size[1]):
+            row = (y - oy) // 2
+            if BAND_RAIL < row <= band_end:
+                strength = 1 - (row - BAND_RAIL) / (band_end - BAND_RAIL + 1)
+                for x in range(im.size[0]):
+                    if not spared(x, y):
+                        r, g, b, a = px[x, y]
+                        px[x, y] = (r, g, b, round(a * strength))
+        return im
+
+    # The stock bar's own run, clear of the shadow the portrait ring throws on it. The tile's end fades
+    # into what precedes its start, so it repeats without a seam, and the corner ends where the tile starts.
+    clean = BAND_CLEAN
+    run = tl.crop((0, 0, tl.width, tl.height))
+    tile = run.crop((BAND_TILE, 0, BAND_TILE + 128, tl.height))
+    fade = 24
+    before = run.crop((BAND_TILE - fade, 0, BAND_TILE, tl.height))
+    for i in range(fade):
+        column = (128 - fade + i, 0, 128 - fade + i + 1, tl.height)
+        blended = Image.blend(tile.crop(column), before.crop((i, 0, i + 1, tl.height)), (i + 1) / fade)
+        tile.paste(blended, column[:2])
+    corner_band = Image.new("RGBA", (95, tl.height), (0, 0, 0, 0))
+    for i in range(95):
+        x = BAND_TILE - 95 + i
+        x = x if x >= clean else 2 * clean - x
+        corner_band.paste(run.crop((x, 0, x + 1, tl.height)), (i, 0))
+
     # Straight runs, cut well clear of the portrait ring and the close box.
     sheet.paste(mapped(tl, (4, 4, 194, 260), 2, left_x, 2, -200), (4, 4))
     keep_box = (4, 4, 194, 260)
@@ -365,24 +473,32 @@ def build_frame(stock):
     sheet.paste(keep(mapped(tr, (202, 4, 392, 260), 2, right_x, 2, -200), right_rail), (202, 4))
     sheet.paste(keep(mapped(bl, (400, 4, 656, 204), 2, -140, 2, 175 - 2 * rail_top),
                      lambda x, y: bottom_rail(y, 175 - 2 * rail_top)), (400, 4))
-    sheet.paste(keep(mapped(tl, (202, 268, 458, 458), 2, -140, 2, band_y), band), (202, 268))
+    sheet.paste(fade_under_band(keep(mapped(tile, (202, 268, 458, 458), 2, 0, 2, band_y), band), band_y), (202, 268))
 
     # Corners. Top right keeps the stock close box the band's close button sits in.
-    sheet.paste(keep(mapped(tr, (664, 268, 854, 364), 2, right_x, 2, band_y),
-                     lambda x, y: band(x, y) or right_rail(x, y)), (664, 268))
+    sheet.paste(fade_under_band(keep(mapped(tr, (664, 268, 854, 364), 2, right_x, 2, band_y),
+                                     lambda x, y: band(x, y) or right_rail(x, y)), band_y, right_rail), (664, 268))
     sheet.paste(keep(mapped(bl, (664, 124, 854, 204), 2, left_x, 2, corner_y),
                      lambda x, y: left_rail(x, y) or bottom_rail(y, corner_y)), (664, 124))
     sheet.paste(keep(mapped(br, (4, 388, 194, 468), 2, right_x, 2, corner_y),
                      lambda x, y: right_rail(x, y) or bottom_rail(y, corner_y)), (4, 388))
 
     # Top left has no stock counterpart without the ring: the band and left rail, cut to Forever's chamfer.
-    corner = Image.new("RGBA", (190, 96), (0, 0, 0, 0))
-    corner.paste(keep(mapped(tl, (0, 0, 190, 96), 2, -140, 2, band_y), band))
-    rail = keep(mapped(tl, (0, 0, 190, 96), 2, left_x, 2, -200), left_rail)
+    # The rail starts at the band's rim and the band at the rail, so neither pokes past the other.
+    rim = band_y + 2 * BAND_RIM
+    corner = fade_under_band(keep(mapped(corner_band, (0, 0, 190, 96), 2, 0, 2, band_y),
+                                  lambda x, y: band(x, y) and x >= 26), band_y)
+    rail = keep(mapped(tl, (0, 0, 190, 96), 2, left_x, 2, -200), lambda x, y: left_rail(x, y) and y >= rim)
     corner.alpha_composite(rail)
     chamfer = forever.crop((466, 268, 656, 364)).getchannel("A").point(lambda v: 255 if v > 200 else 0)
     corner.putalpha(Image.composite(corner.getchannel("A"), Image.new("L", corner.size, 0), chamfer))
     sheet.paste(corner, (466, 268))
+
+    # Filtering reads past a rect's edge: the sheet's clear neighbours showed as a line at every join.
+    for box in ((202, 268, 458, 458), (466, 268, 656, 364), (664, 268, 854, 364), (400, 4, 656, 204)):
+        bleed_sideways(sheet, box)
+    for box in ((4, 4, 194, 260), (202, 4, 392, 260)):
+        bleed_upright(sheet, box)
     save_tga(sheet, OUT / "chrome-frame.tga")
 
 
@@ -460,7 +576,8 @@ def build_tabs(stock):
         cap_w = 30
         paste_scaled(sheet, art.crop((x0, y0, x0 + cap_w, y1)), top_rect)
         paste_scaled(sheet, art.crop((x1 - cap_w, y0, x1, y1)), right_rect)
-        paste_scaled(sheet, art.crop((60, y0, 61, y1)), mid_rect)
+        # The rects are one column wide but filtering reads the next one too, so the strip fills the sheet's width.
+        paste_scaled(sheet, art.crop((60, y0, 61, y1)), (0, mid_rect[1], sheet.width, mid_rect[3]))
 
     cut(inactive, (1, 209, 36, 245), (1, 171, 38, 207), (0, 45, 1, 81), 6, 118, 2, 29)
     cut(active, (1, 127, 36, 169), (1, 83, 38, 125), (0, 1, 1, 43), 6, 119, 0, 32)
@@ -734,6 +851,9 @@ SPELL_RINGS = {"iconframe": ((884, 4, 1022, 135), (-11, 1, 1, -7)),
                "iconframe-inactive": ((148, 320, 284, 447), (-10, 1, 2, -5))}
 
 
+SPELLBOOK_CORNER = (4, 4, 604, 314)
+
+
 def build_spellbook(stock):
     paper = parchment(stock)
     band = load(stock / "questframe/ui-questlogdualpane-left.blp").crop((120, 38, 512, 60)).convert("RGB")
@@ -764,6 +884,8 @@ def build_spellbook(stock):
     save_tga(spine, OUT / "Spellbook/spellbook-ribbon.tga")
 
     elements = load(ROOT / "Spellbook/spellbookelements.blp")
+    # Forever's page corner carries a square of its own paper, and stock's book has no curl.
+    elements.paste((0, 0, 0, 0), SPELLBOOK_CORNER)
     edge = slot_edge(stock, "spellbook/ui-spellbook-spellbackground.blp", (0, 0, 43, 43), 3)
     for rect, (left_units, top_units, right_units, bottom_units) in SPELL_RINGS.values():
         # The icon's box in the rect, then the stock edge just outside it.
@@ -902,6 +1024,8 @@ def check():
         pairs[f"XP/{name}.tga"] = f"XP/{name}.tga"
     pairs["XP/uiexperiencebar.tga"] = "XP/uiexperiencebar.blp"
     pairs["Micromenu/uimicromenu2x.tga"] = "Micromenu/uimicromenu2x.blp"
+    pairs["Micromenu/MicroButton.tga"] = "Professions/MicroButton.tga"
+    pairs["Micromenu/micropvp.tga"] = "Micromenu/micropvp.blp"
     pairs["Talents/talents-sheet.tga"] = "Talents/talents-sheet.tga"
     pairs["Talents/talentframeatlas.tga"] = "Talents/talentframeatlas.blp"
     for name in ("spellbook-background.blp", "spellbook-background_r.blp", "spellbook-ribbon.tga", "spellbookelements.blp"):
@@ -933,6 +1057,15 @@ def check():
         if ours != theirs:
             print(f"{name}: {ours}, {source} is {theirs}")
             ok = False
+    # Shapes the client has shown wrong: a tab's middle must fill its row, the page corner must be gone.
+    tabs = load(OUT / "uiframetabs.tga")
+    for y in (20, 60):
+        if tabs.crop((0, y, tabs.width, y + 1)).getchannel("A").getextrema()[0] == 0:
+            print(f"uiframetabs.tga: row {y} has clear texels in the tab's middle")
+            ok = False
+    if load(OUT / "Spellbook/spellbookelements.blp").crop(SPELLBOOK_CORNER).getchannel("A").getextrema()[1]:
+        print("spellbookelements.blp: Forever's page corner is still there")
+        ok = False
     print("classic skin sheets:", "ok" if ok else "SIZE MISMATCH")
     return ok
 

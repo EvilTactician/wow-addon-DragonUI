@@ -141,8 +141,8 @@ do
         assert(onDisk(classic), classic .. " is not baked")
         count = count + 1
     end
-    -- Each sheet is mapped bare, .tga and .blp: 48 HUD and window sheets, 22 for the decorated windows, 86 talent halves.
-    assert(count == 3 * (48 + 22 + 86), "expected the sheet list, got " .. count)
+    -- Each sheet is mapped bare, .tga and .blp: 50 HUD and window sheets, 22 for the decorated windows, 86 talent halves.
+    assert(count == 3 * (50 + 22 + 86), "expected the sheet list, got " .. count)
 end
 
 -- A class's spec sheets share its one three-tree sheet; the glyph page shares one ground.
