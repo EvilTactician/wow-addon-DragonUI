@@ -16,6 +16,9 @@ Skins.DEFAULT = "forever"
 local SKINS = {
 	classic = {
 		dir = addon._dir .. "Skins\\Classic\\",
+		-- The close button at stock size, in the socket the stock band has for it: the hole runs 1.5 to
+		-- 20.5 in from the right and 2 to 20 down, and its left rim to 25.
+		seat = { closeSize = 19, closeX = -1.5, closeY = -2, closeGap = 5.5 },
 		sheets = {
 			["ForeverUI\\chrome-frame"] = "chrome-frame",
 			["ForeverUI\\chrome-buttons"] = "chrome-buttons",
@@ -199,6 +202,9 @@ function Skins.Apply()
 		return
 	end
 	active = name
+	for field, value in pairs(skin.seat or {}) do
+		addon.WindowSeat[field] = value
+	end
 	Skins.map = buildMap(skin)
 	installHooks(Skins.map)
 	sweep(Skins.map)

@@ -414,9 +414,9 @@ end
 
 function WM.BuildMaxMinButton(border, close)
     local button = CreateFrame("Button", "DragonUIWorldMapMaximizeButton", border)
-    -- The close button's size, two units clear of it.
+    -- The close button's size, just clear of it.
     button:SetSize(addon.WindowSeat.closeSize, addon.WindowSeat.closeSize)
-    button:SetPoint("RIGHT", close, "LEFT", -2, 0)
+    button:SetPoint("RIGHT", close, "LEFT", -addon.WindowSeat.closeGap, 0)
     button:SetFrameLevel(BASE_LEVEL + 5)
     button:SetNormalTexture(ROCK)
     button:SetPushedTexture(ROCK)
