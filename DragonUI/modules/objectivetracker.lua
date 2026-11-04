@@ -1,6 +1,7 @@
 -- Copyright (c) 2026 NeticSoul. Licensed under the MIT License; see LICENSE.
 
 local addon = select(2, ...)
+local L = addon.L
 
 -- Our objectives tracker over the watch APIs; Blizzard's WatchFrame is silenced, never moved.
 
@@ -272,6 +273,53 @@ local function openQuestLogTo(index)
     if QuestLogFrame:IsShown() then QuestLog_Update() else ShowUIPanel(QuestLogFrame) end
 end
 
+-- TomTom hooks only Blizzard's own POI buttons, which our blocks are not, so they ask it directly.
+local TOMTOM_MODIFIERS = { C = IsControlKeyDown, A = IsAltKeyDown, S = IsShiftKeyDown }
+
+local function tomTomLoaded()
+    return TomTom and TomTom.AddZWaypoint and TomTom.profile and true or false
+end
+
+-- TomTom's own quest objective click: on, and every modifier it names held. With none named it
+-- would take every right-click, so the menu keeps those and offers the waypoint instead.
+local function tomTomClick()
+    local poi = tomTomLoaded() and TomTom.profile.poi
+    if not (poi and poi.enable and poi.modifier and poi.modifier ~= "") then return false end
+    for i = 1, #poi.modifier do
+        local held = TOMTOM_MODIFIERS[poi.modifier:sub(i, i)]
+        if not (held and held()) then return false end
+    end
+    return true
+end
+
+-- GetQuestWorldMapAreaID moves the map whatever it answers, so the view goes back as it was.
+local function setTomTomWaypoint(block)
+    local index = GetQuestIndexForWatch(block.watchIndex)
+    local questID = block.questID
+    if not (index and questID and tomTomLoaded()) then return end
+    local title = GetQuestLogTitle(index)
+    local worldMap = addon.WorldMap
+    local shown = WorldMapFrame:IsShown()
+    local restore = shown and worldMap and worldMap.SaveMapView and worldMap.SaveMapView()
+    local c, z, x, y
+    local area = GetQuestWorldMapAreaID(questID)
+    if area and area > 0 then
+        SetMapByID(area)
+        -- QuestPOIGetIconInfo answers for whichever map was last listed.
+        QuestMapUpdateAllQuests()
+        QuestPOIUpdateIcons()
+        local _
+        _, x, y = QuestPOIGetIconInfo(questID)
+        c, z = GetCurrentMapContinent(), GetCurrentMapZone()
+    end
+    if restore then restore() elseif not shown then SetMapToCurrentZone() end
+    if not (x and y and z and z > 0) then
+        addon:Print(string.format(L["No map location for '%s' to set a TomTom waypoint."], title or ""))
+        return
+    end
+    TomTom:AddZWaypoint(c, z, x * 100, y * 100, title)
+end
+
 -- Same entries WatchFrameDropDown_Initialize builds, in the same order.
 local function blockMenu(block)
     local entries = { { text = block.title:GetText(), isTitle = true } }
@@ -292,6 +340,11 @@ local function blockMenu(block)
                 QuestLogPushQuest()
             end }
         end
+        if tomTomLoaded() and block.questID then
+            entries[#entries + 1] = { text = L["Set TomTom waypoint"], func = function()
+                setTomTomWaypoint(block)
+            end }
+        end
     elseif block.kind == "achievement" then
         entries[#entries + 1] = { text = OBJECTIVES_STOP_TRACKING, func = function()
             RemoveTrackedAchievement(block.achievementID)
@@ -307,6 +360,10 @@ end
 -- UIDROPDOWNMENU_OPEN_MENU and the map re-reads it on every update.
 local function onBlockClick(block, button)
     if button == "RightButton" then
+        if block.kind == "quest" and tomTomClick() then
+            setTomTomWaypoint(block)
+            return
+        end
         if addon.Menu then addon.Menu.Open(block, blockMenu(block)) end
         return
     end
