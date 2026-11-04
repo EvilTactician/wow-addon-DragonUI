@@ -3425,6 +3425,13 @@ local function SyncMigratedBarVisibility(bar)
             local btn = _G[name]
             if btn then table.insert(hoverFrames, btn) end
         end
+        -- Buttons other addons put on the micro menu (addon.RegisterMicroButton).
+        if bar.key == "micro" then
+            for _, name in ipairs(addon.ExtraMicroButtonNames or {}) do
+                local btn = _G[name]
+                if btn then table.insert(hoverFrames, btn) end
+            end
+        end
     end
 
     addon.VisibilityFade.Register(bar.key, frame, {

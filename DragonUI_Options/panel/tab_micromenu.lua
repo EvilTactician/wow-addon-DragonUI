@@ -124,6 +124,52 @@ local function BuildMicromenuTab(scroll)
         end,
     })
 
+    -- ====================================================================
+    -- BUTTONS
+    -- ====================================================================
+    local buttons = C:AddSection(scroll, LO["Micro Menu Buttons"])
+    C:AddDescription(buttons, LO["Choose which buttons the micro menu shows. Their key bindings still work."])
+
+    local function buttonToggle(stem, label)
+        C:AddToggle(buttons, {
+            label = label,
+            relWidth = 0.33,
+            getFunc = function()
+                local hidden = C:GetDBValue("micromenu.hidden_buttons")
+                return not (hidden and hidden[stem])
+            end,
+            setFunc = function(val)
+                local hidden = C:GetDBValue("micromenu.hidden_buttons") or {}
+                hidden[stem] = (not val) or nil
+                C:SetDBValue("micromenu.hidden_buttons", hidden)
+                if addon.RefreshMicromenuButtons then addon.RefreshMicromenuButtons() end
+            end,
+            disabled = function() return not addon:IsModuleEnabled("micromenu") end,
+        })
+    end
+
+    -- The stock buttons by the client's own names; Professions has its own toggle above.
+    local STOCK = {
+        { "Character", CHARACTER_BUTTON or "Character Info" },
+        { "Spellbook", SPELLBOOK_ABILITIES_BUTTON or "Spellbook & Abilities" },
+        { "Talent", TALENTS_BUTTON or "Talents" },
+        { "Achievement", ACHIEVEMENT_BUTTON or "Achievements" },
+        { "QuestLog", QUESTLOG_BUTTON or "Quest Log" },
+        { "Socials", SOCIAL_BUTTON or "Social" },
+        { "LFD", DUNGEONS_BUTTON or "Dungeon Finder" },
+        { "Collections", LO["Pets & Mounts"] },
+        { "PVP", PLAYER_V_PLAYER or "Player vs. Player" },
+        { "MainMenu", MAINMENU_BUTTON or "Main Menu" },
+        { "Help", HELP_BUTTON or "Help Request" },
+    }
+    for _, entry in ipairs(STOCK) do
+        if _G[entry[1] .. "MicroButton"] then buttonToggle(entry[1], entry[2]) end
+    end
+    -- Buttons other addons added (addon.RegisterMicroButton).
+    for _, extra in ipairs(addon.GetExtraMicroButtons and addon.GetExtraMicroButtons() or {}) do
+        buttonToggle(extra.stem, extra.label)
+    end
+
     local visibility = C:AddSection(scroll, LO["Visibility"])
     local logicValues = {
         ["and"] = LO["AND (both required)"],

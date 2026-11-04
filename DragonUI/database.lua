@@ -444,6 +444,7 @@ local defaults = {
             bags_collapsed = false,
             grayscale_icons = false,
             show_latency_indicator = true,
+            hidden_buttons = {}, -- micro buttons switched off, by stem ("Help", "PVP", ...)
 
             -- Grayscale icons configuration
             grayscale = {

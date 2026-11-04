@@ -106,6 +106,61 @@ local MICRO_BUTTONS = {
 }
 
 
+-- Buttons other addons add with addon.RegisterMicroButton, each slotted in after the stock button it names.
+local EXTRA_MICRO_BUTTONS = {}
+-- [lower-case stem] = { Up =, Down =, Mouseover =, Disabled = } coords, the file as the fifth field.
+local EXTRA_MICRO_ART = {}
+-- Their global names, for the hover fade (mainbars.lua).
+addon.ExtraMicroButtonNames = {}
+
+local function MicroStem(button)
+    return (button:GetName():gsub("MicroButton$", ""))
+end
+
+-- Buttons the player switched off in the options (micromenu.hidden_buttons, keyed by stem).
+local function IsHiddenByPlayer(button)
+    local mm = addon.db and addon.db.profile and addon.db.profile.micromenu
+    local hidden = mm and mm.hidden_buttons
+    return hidden and hidden[MicroStem(button)] and true or false
+end
+
+-- The stock buttons in order with the extras slotted in; an extra whose button is missing goes before
+-- the game menu, or last.
+local function MicroButtonList()
+    local list, placed = {}, {}
+    local function addAfter(stem)
+        for _, extra in ipairs(EXTRA_MICRO_BUTTONS) do
+            if not placed[extra] and extra.after == stem then
+                placed[extra] = true
+                list[#list + 1] = extra.button
+            end
+        end
+    end
+    local present = {}
+    for i = 1, #MICRO_BUTTONS do
+        if MICRO_BUTTONS[i] then present[MicroStem(MICRO_BUTTONS[i])] = true end
+    end
+    local function addOrphans()
+        for _, extra in ipairs(EXTRA_MICRO_BUTTONS) do
+            if not placed[extra] and not present[extra.after] then
+                placed[extra] = true
+                list[#list + 1] = extra.button
+            end
+        end
+    end
+    for i = 1, #MICRO_BUTTONS do
+        local button = MICRO_BUTTONS[i]
+        if button then
+            local stem = MicroStem(button)
+            if stem == "MainMenu" then addOrphans() end
+            list[#list + 1] = button
+            addAfter(stem)
+        end
+    end
+    addOrphans()
+    return list
+end
+
 -- The strip's default anchor allows for an eleventh button, which Pets & Mounts now supplies.
 local function HasCollectionsButton()
     return _G.CollectionsMicroButton ~= nil
@@ -452,6 +507,12 @@ local function GetAtlasKey(buttonName)
 end
 
 local function GetColoredTextureCoords(buttonName, textureType)
+    local extra = EXTRA_MICRO_ART[buttonName]
+    if extra then
+        local coords = extra[textureType]
+        return (coords and #coords >= 4) and coords or nil
+    end
+
     local atlasKey = GetAtlasKey(buttonName)
     if not atlasKey then
         return nil
@@ -631,7 +692,7 @@ end
 
 local function StoreOriginalMicroButtonStates()
     -- Store original positions and parents for all micro buttons
-    for _, button in pairs(MICRO_BUTTONS) do
+    for _, button in ipairs(MicroButtonList()) do
         if button then -- Check if button exists (e.g. PVPMicroButton might not)
             local buttonName = button:GetName()
             if not MicromenuModule.originalStates[buttonName] then
@@ -752,7 +813,7 @@ local function RestoreMicromenuSystem()
     MicromenuModule.stateDrivers = {}
 
     -- Restore micro buttons to original state
-    for _, button in pairs(MICRO_BUTTONS) do
+    for _, button in ipairs(MicroButtonList()) do
         if button then
             local buttonName = button:GetName()
             local original = MicromenuModule.originalStates[buttonName]
@@ -787,6 +848,8 @@ local function RestoreMicromenuSystem()
                 -- DragonUI's own buttons (Collections, Professions) start hidden and have no stock slot to go back to.
                 if not original.shown then
                     button:Hide()
+                elseif IsHiddenByPlayer(button) then
+                    button:Show()
                 end
 
                 -- Restore textures
@@ -1804,9 +1867,9 @@ end
 -- as in the skin pass is what closes the gap it would otherwise leave in the strip.
 local function CollectPresentMicroButtons()
     local list = {}
-    for i = 1, #MICRO_BUTTONS do
-        if MICRO_BUTTONS[i] and not MICRO_BUTTONS[i].dragonUISuppressed then
-            list[#list + 1] = MICRO_BUTTONS[i]
+    for _, button in ipairs(MicroButtonList()) do
+        if not button.dragonUISuppressed and not IsHiddenByPlayer(button) then
+            list[#list + 1] = button
         end
     end
     return list
@@ -1824,6 +1887,10 @@ local function GetMicroLayoutMetrics(config, useGrayscale, numButtons)
     local columns = math.floor(tonumber(config.columns) or 12)
     if columns < 1 then
         columns = 1
+    end
+    -- The slider's top end means one row, also once other addons' buttons make it longer than twelve.
+    if columns >= 12 then
+        columns = math.max(columns, numButtons)
     end
     if numButtons < 1 then
         return buttonWidth, buttonHeight, hStep, vStep, 1, 1, buttonWidth, buttonHeight
@@ -1993,9 +2060,21 @@ local function layoutMicroButtons(xOffset)
     -- Above MainMenuBarArtFrame (MainMenuBar+1), whose classic art otherwise covers the buttons.
     menu:SetFrameLevel(MainMenuBar:GetFrameLevel() + 2)
 
-    for i = 1, #MICRO_BUTTONS do
-        local button = MICRO_BUTTONS[i]
-        if button and not button.dragonUISuppressed then
+    -- A button the player switched off stays hidden, also when something shows it again.
+    for _, button in ipairs(MicroButtonList()) do
+        if IsHiddenByPlayer(button) then
+            button:Hide()
+            if not button.dragonUIPlayerHideHooked then
+                button:HookScript("OnShow", function(self)
+                    if MicromenuModule.applied and IsHiddenByPlayer(self) then self:Hide() end
+                end)
+                button.dragonUIPlayerHideHooked = true
+            end
+        end
+    end
+
+    for _, button in ipairs(MicroButtonList()) do
+        if not button.dragonUISuppressed and not IsHiddenByPlayer(button) then
             local buttonName = button:GetName():gsub('MicroButton', '')
             local name = string.lower(buttonName);
 
@@ -2042,17 +2121,34 @@ local function layoutMicroButtons(xOffset)
                     button.DragonUIHover:Hide()
                 end
 
-                if normalTexture then
-                    normalTexture:SetAtlasTexture('ui-hud-micromenu-' .. name .. '-up-2x')
-                end
-                if pushedTexture then
-                    pushedTexture:SetAtlasTexture('ui-hud-micromenu-' .. name .. '-down-2x')
-                end
-                if disabledTexture then
-                    disabledTexture:SetAtlasTexture('ui-hud-micromenu-' .. name .. '-disabled-2x')
-                end
-                if highlightTexture then
-                    highlightTexture:SetAtlasTexture('ui-hud-micromenu-' .. name .. '-mouseover-2x')
+                local extraArt = EXTRA_MICRO_ART[name]
+                if extraArt then
+                    -- An added button has no grayscale atlas: its own art, without the colour.
+                    local states = {
+                        { 'GetNormalTexture', 'SetNormalTexture', extraArt.Up },
+                        { 'GetPushedTexture', 'SetPushedTexture', extraArt.Down },
+                        { 'GetDisabledTexture', 'SetDisabledTexture', extraArt.Disabled },
+                        { 'GetHighlightTexture', 'SetHighlightTexture', extraArt.Mouseover },
+                    }
+                    for _, state in ipairs(states) do
+                        local coords = state[3]
+                        SetMicroStateTexture(button, state[1], state[2], coords and coords[5], coords)
+                        local tex = button[state[1]](button)
+                        if tex and coords then tex:SetDesaturated(true) end
+                    end
+                else
+                    if normalTexture then
+                        normalTexture:SetAtlasTexture('ui-hud-micromenu-' .. name .. '-up-2x')
+                    end
+                    if pushedTexture then
+                        pushedTexture:SetAtlasTexture('ui-hud-micromenu-' .. name .. '-down-2x')
+                    end
+                    if disabledTexture then
+                        disabledTexture:SetAtlasTexture('ui-hud-micromenu-' .. name .. '-disabled-2x')
+                    end
+                    if highlightTexture then
+                        highlightTexture:SetAtlasTexture('ui-hud-micromenu-' .. name .. '-mouseover-2x')
+                    end
                 end
             elseif isPVPButton then
                 SetupPVPButton(button)
@@ -2708,6 +2804,43 @@ local function LoadDefaultWidgetSettings()
         end
     end
 end
+-- ============================================================================
+-- BUTTONS FROM OTHER ADDONS
+-- ============================================================================
+
+-- Adds an addon's button to the strip. button: a Button named "<Stem>MicroButton", hidden until the
+-- strip shows it. opts = { after = the stock stem it follows ("QuestLog", "LFD", ...; before the game
+-- menu when that one is missing), label = its name in the options, art = { Up =, Down =, Mouseover =,
+-- Disabled = } as { left, right, top, bottom, file } }. The options' button toggles list it, and it
+-- fades with the strip. Returns true when it was added.
+function addon.RegisterMicroButton(button, opts)
+    opts = opts or {}
+    local name = button and button.GetName and button:GetName()
+    if not name or not name:find("MicroButton$") then return false end
+    for _, extra in ipairs(EXTRA_MICRO_BUTTONS) do
+        if extra.button == button then return true end
+    end
+    local stem = MicroStem(button)
+    table.insert(EXTRA_MICRO_BUTTONS, { button = button, after = opts.after or "QuestLog", label = opts.label or stem })
+    if opts.art then EXTRA_MICRO_ART[stem:lower()] = opts.art end
+    table.insert(addon.ExtraMicroButtonNames, name)
+    -- Added after login (a load-on-demand addon): it still needs its original state and a skin pass.
+    if MicromenuModule.applied then
+        StoreOriginalMicroButtonStates()
+        addon.RefreshMicromenuButtons()
+    end
+    return true
+end
+
+-- The added buttons, for the options: { { stem =, label = } }.
+function addon.GetExtraMicroButtons()
+    local out = {}
+    for _, extra in ipairs(EXTRA_MICRO_BUTTONS) do
+        out[#out + 1] = { stem = MicroStem(extra.button), label = extra.label }
+    end
+    return out
+end
+
 -- ============================================================================
 -- INITIALIZATION
 -- ============================================================================

@@ -1803,6 +1803,8 @@ L["Scales the whole professions window; the room it takes beside other panels fo
 L["Side Tabs Scale"] = true
 L["Scales only the profession tabs beside the window, on top of the window scale."] = true
 L["Professions Micro Button"] = true
+L["Micro Menu Buttons"] = true
+L["Choose which buttons the micro menu shows. Their key bindings still work."] = true
 L["Show the Professions button in the micro menu. It opens the professions overview."] = true
 L["Combo Points"] = true
 L["Combo points as orbs under the player frame and/or on the target frame."] = true
