@@ -27,11 +27,11 @@
 
 ### This fork
 
-This repository is buildthehomelab's customized fork. Download the
-[main branch](https://github.com/buildthehomelab/wow-addon-DragonUI/archive/refs/heads/main.zip)
+This repository is EvilTactician's fork of buildthehomelab's customized fork. Download the
+[main branch](https://github.com/EvilTactician/wow-addon-DragonUI/archive/refs/heads/main.zip)
 and install both `DragonUI` and `DragonUI_Options` from that archive. Back up your
 `WTF` settings before updating. Report fork-specific bugs in
-[this repository's issue tracker](https://github.com/buildthehomelab/wow-addon-DragonUI/issues).
+[this repository's issue tracker](https://github.com/EvilTactician/wow-addon-DragonUI/issues).
 
 The upstream downloads below are the original NeticSoul edition; they do not
 include this fork's custom guild, professions, currency and achievement integrations.
@@ -152,7 +152,7 @@ the search panel's layout and interaction.
 - Single-line tooltips show text overlapping the health bar.
 - Party and raid scenarios require further edge-case testing.
 - Some third-party addon setups may require manual module disabling.
-- Found a bug? [Open an issue](https://github.com/buildthehomelab/wow-addon-DragonUI/issues).
+- Found a bug? [Open an issue](https://github.com/EvilTactician/wow-addon-DragonUI/issues).
 
 ## 🙏 Credits And References
 
@@ -221,7 +221,7 @@ DragonUI's own code is released under the [MIT License](LICENSE). Bundled librar
 
 DragonUI is a free, fan-made addon. No content is sold and no in-game advantages are provided. Donations are entirely voluntary. Not affiliated with or endorsed by Blizzard Entertainment.
 
-## ☕ Support The Project
+## ☕ Support The Original Developer of Project (NeticSoul)
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/neticsoul)
 
