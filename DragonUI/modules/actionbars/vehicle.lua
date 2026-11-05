@@ -595,7 +595,9 @@ local function positionVehicleButtons()
 
     local count = VEHICLE_MAX_ACTIONBUTTONS
     local rowWidth = count * SLOT_SIZE + (count - 1) * SLOT_GAP
-    local shift = IsVehicleAimAngleAdjustable() and -20 or -48
+    -- The mechanical art's tray fits the row at -20, and its pitch controls stay up on seats without pitch.
+    local onTray = vehicleArt.MechanicalArt:IsShown() or IsVehicleAimAngleAdjustable()
+    local shift = onTray and -20 or -48
     local firstX = shift - rowWidth / 2
 
     local previous
@@ -616,14 +618,7 @@ local function positionVehicleButtons()
     end
 end
 
--- Hide vehicle buttons that have no action assigned (empty slots).
--- Uses icon:IsShown() to detect empty slots — Blizzard's ActionButton_Update
--- hides the icon widget for buttons without actions, so we piggyback on that.
--- HasAction() / GetActionTexture() don't work reliably for vehicle action
--- slots in WoW 3.3.5a because the internal slot IDs differ from standard bars.
--- Safety: only hides buttons if at least ONE button has a visible icon.
--- If all icons are hidden, Blizzard hasn't populated slot data yet — we skip
--- and let the next timer/event retry.
+-- All six stay Shown for the row, so empties go by alpha; only the icon says a slot is filled.
 local function HideEmptyVehicleButtons()
     if not UnitHasVehicleUI('player') then return end
 
@@ -643,22 +638,54 @@ local function HideEmptyVehicleButtons()
                     button:EnableMouse(true)
                 end
             else
+                button:SetAlpha(0)
                 emptyButtons[#emptyButtons + 1] = button
             end
         end
     end
 
-    -- Only hide empty buttons once we've confirmed at least one slot
-    -- has an action (icon visible). If ALL icons are hidden, Blizzard
-    -- hasn't finished updating yet — skip and wait for the next call.
-    if anyVisible then
+    -- An all-empty seat keeps its mouse: a swap to driver in combat could not re-enable it.
+    if anyVisible and not inCombat then
         for _, button in ipairs(emptyButtons) do
-            button:SetAlpha(0)
-            if not inCombat then
-                button:EnableMouse(false)
-            end
+            button:EnableMouse(false)
         end
     end
+end
+
+-- Our slot events can beat the button's own, so a late action must light up from its update.
+local slotUpdatesHooked = false
+local function HookVehicleSlotUpdates()
+    if slotUpdatesHooked then return end
+    slotUpdatesHooked = true
+    hooksecurefunc("ActionButton_Update", function(button)
+        if button.alwaysBonus and vehiclebar then
+            HideEmptyVehicleButtons()
+        end
+    end)
+end
+
+-- VehicleMenuBar stays hidden, so ActionButtonDown pushes the hidden ActionButtonN instead of ours.
+local keyPushed = {}
+local keyPressesHooked = false
+local function HookVehicleKeyPresses()
+    if keyPressesHooked then return end
+    keyPressesHooked = true
+    hooksecurefunc("ActionButtonDown", function(id)
+        if not (vehiclebar and vehiclebar:IsVisible()) or id > VEHICLE_MAX_ACTIONBUTTONS then return end
+        local button = _G["VehicleMenuBarActionButton" .. id]
+        if button and button:GetButtonState() == "NORMAL" then
+            button:SetButtonState("PUSHED")
+            keyPushed[id] = button
+        end
+    end)
+    hooksecurefunc("ActionButtonUp", function(id)
+        local button = keyPushed[id]
+        if not button then return end
+        keyPushed[id] = nil
+        if button:GetButtonState() == "PUSHED" then
+            button:SetButtonState("NORMAL")
+        end
+    end)
 end
 
 -- Restore all vehicle buttons to normal state when exiting vehicle
@@ -761,6 +788,7 @@ local function OnVehicleEvent(self, event, ...)
         end
         UnitFrameHealthBar_Update(VehicleMenuBarHealthBar, 'vehicle')
         UnitFrameManaBar_Update(VehicleMenuBarPowerBar, 'vehicle')
+        HideEmptyVehicleButtons()
         -- Action data isn't populated when UNIT_ENTERED_VEHICLE fires.
         -- Schedule multiple delayed checks to catch when the data arrives.
         -- ACTIONBAR_UPDATE_STATE / ACTIONBAR_SLOT_CHANGED also trigger this
@@ -994,6 +1022,9 @@ local function ApplyVehicleSystem()
         -- Pre-parent now: SetParent/SetPoint on secure frames are blocked in combat, and the [vehicleui]
         -- driver can Show the bar mid-combat (Malygos drakes). The skin is applied on UNIT_ENTERING_VEHICLE.
         positionVehicleButtons()
+
+        HookVehicleSlotUpdates()
+        HookVehicleKeyPresses()
 
         -- Pre-style vehicle buttons NOW so they already have Dragonflight
         -- borders when the state driver shows them. Without this, buttons

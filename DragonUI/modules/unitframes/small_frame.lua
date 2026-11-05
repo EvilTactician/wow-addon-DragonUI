@@ -109,16 +109,6 @@ function UF.SmallFrame.Create(opts)
     -- UNIT HELPERS
     -- ========================================================================
 
-    local function GetUnit()
-        if not UnitExists(opts.parentUnit) then
-            return nil
-        end
-        if UnitExists(opts.unitToken) then
-            return opts.unitToken
-        end
-        return nil
-    end
-
     local function ShouldShow()
         if not IsNativeVisibilityEnabled() then
             return false
@@ -159,7 +149,7 @@ function UF.SmallFrame.Create(opts)
         local config = GetConfig()
         if not config then return end
 
-        local enabled = config.classPortrait
+        local enabled = config.classPortrait or config.racePortrait
         local portrait = frames.portrait
         if not portrait or not frames.main then return end
 
@@ -169,16 +159,7 @@ function UF.SmallFrame.Create(opts)
             return
         end
 
-        local useAlternative = config.alternativeClassIcons
-
-        if not UF.UpdateClassPortrait(
-            opts.unitToken,
-            portrait,
-            frames.main,
-            frameElements,
-            true,
-            useAlternative
-        ) then
+        if not UF.ApplyPortraitStyle(opts.unitToken, portrait, config) then
             RestoreSmallFramePortrait(portrait)
         end
     end

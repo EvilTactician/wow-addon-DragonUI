@@ -490,6 +490,9 @@ local function DarkenUnitFrameBorders(tint)
     if playerLevelCircle then DarkenTexture(playerLevelCircle, tint) end
     local playerPvPCircle = _G["DragonUIPlayerPvPCircle"]
     if playerPvPCircle then DarkenTexture(playerPvPCircle, tint) end
+    if addon.GetComboPointRings then
+        for _, ring in ipairs(addon.GetComboPointRings()) do DarkenTexture(ring, tint) end
+    end
 
     -- Vehicle border (when in vehicle)
     local vehicleTex = _G["PlayerFrameVehicleTexture"]
