@@ -75,6 +75,16 @@ local function selectedEntry()
     return CO.Find(kind(), selected[kind()])
 end
 
+-- Protected in combat: Blizzard's panel may call it because it is secure, this window is not.
+local function pickupEntry(entry)
+    if not (entry and entry.index) then return end
+    if InCombatLockdown() then
+        UIErrorsFrame:AddMessage(ERR_NOT_IN_COMBAT, 1, 0.1, 0.1, 1)
+        return
+    end
+    PickupCompanion(kind(), entry.index)
+end
+
 local function insertChatLink(entry)
     if not (entry and entry.spellID and IsModifiedClick("CHATLINK")) then return false end
     -- The macro editor wants the plain name so /cast works, as CompanionButton_OnModifiedClick does.
@@ -205,8 +215,7 @@ local function buildInfo(host)
     infoDrag:RegisterForClicks("LeftButtonUp", "RightButtonUp")
     infoDrag:RegisterForDrag("LeftButton")
     infoDrag:SetScript("OnDragStart", function()
-        local entry = selectedEntry()
-        if entry and entry.index then PickupCompanion(kind(), entry.index) end
+        pickupEntry(selectedEntry())
     end)
     infoDrag:SetScript("OnClick", function(_, button)
         local entry = selectedEntry()
@@ -343,7 +352,7 @@ local function buildRow(parent)
     row:RegisterForClicks("LeftButtonUp", "RightButtonUp")
     row:RegisterForDrag("LeftButton")
     row:SetScript("OnDragStart", function(self)
-        if self._entry and self._entry.index then PickupCompanion(kind(), self._entry.index) end
+        pickupEntry(self._entry)
     end)
     row:SetScript("OnClick", function(self, button)
         if not self._entry then return end
@@ -355,6 +364,12 @@ local function buildRow(parent)
         end
         selected[kind()] = self._entry.spellID
         CO.MarkSeen(kind(), self._entry.creatureID)
+        refresh()
+    end)
+    -- The first click of the pair already selected the row through OnClick.
+    row:SetScript("OnDoubleClick", function(self, button)
+        if button ~= "LeftButton" or not (self._entry and self._entry.index) then return end
+        CO.Summon(kind(), self._entry)
         refresh()
     end)
     row:SetScript("OnEnter", function(self)

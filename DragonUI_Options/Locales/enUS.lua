@@ -484,6 +484,9 @@ L["Hover the coins in your bags to list the gold of every character that has log
 L["Show a tooltip with your other characters' gold when hovering the money in bags."] = true
 L["Show All Realms"] = true
 L["List characters from every realm instead of only the realm you are playing on."] = true
+L["Forget Character"] = true
+L["Delete the selected character's saved gold, item counts and offline bank. Your current character is never listed."] = true
+L["Forget all saved data of %s?"] = true
 
 -- Bag Sort
 L["Bag Sort"] = true
@@ -757,6 +760,9 @@ L["Fade the pet frame until you hover over it."] = true
 L["Fade the pet frame until you enter combat."] = true
 L["Fade party frames until you hover over them."] = true
 L["Fade party frames until you enter combat."] = true
+L["Buff Tooltip"] = true
+L["When to show the box of buffs and debuffs that opens as you hover a party member."] = true
+L["Hide the party frames at all times."] = true
 L["Fade boss frames until you hover over them."] = true
 L["Fade boss frames until you enter combat."] = true
 L["Boss"] = true
@@ -1005,6 +1011,8 @@ L["Party"] = true
 L["Class Color Health"] = true
 L["Class icon instead of 3D model for players."] = true
 L["Alternative Class Icons"] = true
+L["Race Portrait"] = true
+L["Race icon instead of 3D model for players."] = true
 L["No Portrait"] = true
 L["Hides the portrait: the frame closes where it was and the bars keep their place."] = true
 L["No Portrait (All Frames)"] = true
@@ -1529,6 +1537,9 @@ L["Who draws quest icons on plates when Questie is loaded with its own nameplate
 L["Ask"] = true
 L["Pointer Mode"] = true
 L["Show a single quest marker on any objective mob instead of separate kill/loot icons."] = true
+L["Reset Learned Quest Loot"] = true
+L["Forget which mobs nameplates learned drop your quest items. They are learned again as you play."] = true
+L["Forget every quest item source that nameplates have learned?"] = true
 L["Kill Icon"] = true
 L["Choose the icon shown for kill objectives."] = true
 L["Sword"] = true

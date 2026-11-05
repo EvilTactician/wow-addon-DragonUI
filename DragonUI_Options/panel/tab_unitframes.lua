@@ -85,6 +85,7 @@ end
 local function HandleClassPortraitToggle(unitKey, refreshFunc, enabled)
     if enabled then
         C:SetDBValue("unitframe." .. unitKey .. ".alternativeClassIcons", true)
+        C:SetDBValue("unitframe." .. unitKey .. ".racePortrait", false)
     end
     RefreshUnitFramesTabAfterToggle(refreshFunc)
 end
@@ -154,6 +155,21 @@ local function AddClassPortraitToggles(parent, unitKey, refreshFunc)
             return not C:GetDBValue("unitframe." .. unitKey .. ".classPortrait") or IsPortraitOff(unitKey)
         end,
         callback = refreshFunc,
+    })
+
+    C:AddToggle(parent, {
+        label = LO["Race Portrait"],
+        desc = LO["Race icon instead of 3D model for players."],
+        dbPath = "unitframe." .. unitKey .. ".racePortrait",
+        disabled = function()
+            return IsPortraitOff(unitKey)
+        end,
+        callback = function(value)
+            if value then
+                C:SetDBValue("unitframe." .. unitKey .. ".classPortrait", false)
+            end
+            RefreshUnitFramesTabAfterToggle(refreshFunc)
+        end,
     })
 end
 
@@ -822,6 +838,8 @@ local function BuildPartySection(scroll)
         callback = refreshParty,
     })
 
+    AddClassPortraitToggles(s, "party", refreshParty)
+
     C:AddToggle(s, {
         label = LO["Format Large Numbers"],
         dbPath = "unitframe.party.breakUpLargeNumbers",
@@ -880,9 +898,23 @@ local function BuildPartySection(scroll)
         callback = refreshParty,
     })
 
+    C:AddDropdown(s, {
+        label = LO["Buff Tooltip"],
+        desc = LO["When to show the box of buffs and debuffs that opens as you hover a party member."],
+        dbPath = "unitframe.party.buff_tooltip",
+        values = {
+            always = LO["Always"],
+            combat = LO["Hide in Combat"],
+            never  = LO["Never"],
+        },
+        width = 200,
+    })
+
     C:AddHeading(s, LO["Visibility"])
     C:AddVisibilityFadeToggles(s, {
         dbPrefix = "unitframe.party",
+        alwaysHidden = true,
+        alwaysHiddenDesc = LO["Hide the party frames at all times."],
         hoverDesc = LO["Fade party frames until you hover over them."],
         combatDesc = LO["Fade party frames until you enter combat."],
         callback = refreshParty,
