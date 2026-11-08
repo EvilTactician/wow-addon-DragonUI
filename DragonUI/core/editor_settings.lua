@@ -1723,6 +1723,8 @@ E.Register("questtracker", { settings = {
     Check(T("Show Header Background"), "questtracker.show_header", R.quest, {
         get = function() return GetDB("questtracker.show_header") ~= false end }),
     Slider(T("Font Size"), "questtracker.font_size", 8, 18, 1, R.quest, { resize = true }),
+    Check(T("Quest Difficulty Colors"), "questtracker.difficulty_color", R.quest, {
+        get = function() return GetDB("questtracker.difficulty_color") ~= false end }),
     Check(T("Custom Height"), "questtracker.custom_height", R.quest, {
         get = function() return GetDB("questtracker.custom_height") == true end,
         after = function() E.Rebuild() end }),

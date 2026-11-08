@@ -293,6 +293,7 @@ local defaults = {
             show_header = true,
             collapsed = false,   -- Survives reloads; Blizzard's own tracker forgets it
             font_size = 12,      -- Point size for quest tracker text (WoW default: 11)
+            difficulty_color = true, -- Quest titles take the quest log's level colours, as on the map
             custom_height = false, -- Off: the tracker runs down to the bags bar or the screen bottom
             height = 400,        -- Cap used when custom_height is on (slider range 400-1000)
             show_on_hover = false,

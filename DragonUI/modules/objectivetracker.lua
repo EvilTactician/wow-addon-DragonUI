@@ -59,6 +59,11 @@ local function fontSize()
     return (config and config.font_size) or 12
 end
 
+local function difficultyColor()
+    local config = addon.db and addon.db.profile and addon.db.profile.questtracker
+    return not config or config.difficulty_color ~= false
+end
+
 local function customHeight()
     local config = addon.db and addon.db.profile and addon.db.profile.questtracker
     local height = config and config.custom_height and tonumber(config.height)
@@ -401,7 +406,12 @@ end
 OT.ClickBlock = onBlockClick
 
 local function highlight(block, onEnter)
-    if onEnter then
+    if block.level and difficultyColor() then
+        -- Idle dims the level colour by the same step TITLE_IDLE dims gold, so hover still lifts it.
+        local color = GetQuestDifficultyColor(block.level)
+        local dim = onEnter and 1 or 0.75
+        block.title:SetTextColor(color.r * dim, color.g * dim, color.b * dim)
+    elseif onEnter then
         block.title:SetTextColor(NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b)
     else
         block.title:SetTextColor(TITLE_IDLE[1], TITLE_IDLE[2], TITLE_IDLE[3])
@@ -752,6 +762,7 @@ local function fillBlock(block, data, width, size)
     block.watchIndex, block.questLogIndex = data.watchIndex, data.questLogIndex
     block.questID, block.achievementID = data.questID, data.achievementID
     block.hasItem = data.hasItem
+    block.level = data.kind == "quest" and data.level or nil
     block.menu, block.onClick, block.ref = data.menu, data.onClick, data.ref
     block.onEnter, block.onLeave = data.onEnter, data.onLeave
     block.title:SetText(data.title or "")

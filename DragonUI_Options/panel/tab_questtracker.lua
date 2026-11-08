@@ -50,6 +50,18 @@ local function BuildQuesttrackerTab(scroll)
     })
 
     C:AddToggle(section, {
+        label = LO["Quest Difficulty Colors"],
+        desc = LO["Color quest titles by their level compared to yours, like the quest log and the map."],
+        getFunc = function()
+            return C:GetDBValue("questtracker.difficulty_color") ~= false
+        end,
+        setFunc = function(val)
+            C:SetDBValue("questtracker.difficulty_color", val)
+            RefreshQT()
+        end,
+    })
+
+    C:AddToggle(section, {
         label = LO["Custom Height"],
         desc = LO["Limit the tracker to a fixed height. When off, it stops above the bags. Quests that don't fit are hidden until there is room."],
         getFunc = function()

@@ -1090,6 +1090,7 @@ L["Styled Health Bar"] = true
 L["Show Aura Source"] = true
 L["Show Header Background"] = true
 L["Font Size"] = true
+L["Quest Difficulty Colors"] = true
 L["Custom Height"] = true
 L["Size"] = true
 L["Narrow"] = true
