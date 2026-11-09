@@ -28,3 +28,17 @@ end
 local events = CreateFrame("Frame")
 events:RegisterEvent("MINIMAP_PING")
 events:SetScript("OnEvent", onPing)
+
+-- 3.3.5 places the ping once and leaves it, so it slid along with the player. The client still
+-- tracks the pinged spot, so the ping follows it each frame as older clients' Minimap_OnUpdate did.
+MinimapPing:HookScript("OnUpdate", function(self)
+    if not (((self.timer or 0) > 0 or self.fadeOut) and addon:IsModuleEnabled("minimap")) then return end
+    local x, y = Minimap:GetPingPosition()
+    x, y = x * Minimap:GetWidth(), y * Minimap:GetHeight()
+    -- Same edge rule as Minimap_SetPing: off the minimap it hides rather than sit on the border.
+    if sqrt(x * x + y * y) < Minimap:GetWidth() / 2 then
+        self:SetPoint("CENTER", Minimap, "CENTER", x, y)
+    else
+        self:Hide()
+    end
+end)
