@@ -1573,7 +1573,11 @@ E.Register("minimap", { settings = {
             SetDB("minimap.border_alpha", value)
             if MinimapBorderTop then MinimapBorderTop:SetAlpha(value) end
         end }),
-    Check(T("New Blip Style"), "minimap.blip_skin", R.minimap),
+    Check(T("New Blip Style"), "minimap.blip_skin", R.minimap, { after = function() E.Rebuild() end }),
+    Drop(T("Quest Icons"), "minimap.blip_quest_style", {
+        { "shield", T("On Shields") },
+        { "plain", T("Plain") },
+    }, R.minimap, { disabled = function() return not GetDB("minimap.blip_skin") end }),
     Slider(T("Player Arrow Size"), "minimap.player_arrow_size", 8, 50, 1, R.minimap),
     Slider(T("Addon Button Distance"), "minimap.addon_button_distance", -10, 20, 1, R.minimap),
     Section(T("Time & Calendar"), true),

@@ -277,6 +277,18 @@ local function BuildMinimapTab(scroll)
         callback = RefreshMinimap,
     })
 
+    C:AddDropdown(basic, {
+        label = LO["Quest Icons"],
+        desc = LO["How the new blip style draws quest givers and turn-ins: the ! and ? on a shield, or the mark alone."],
+        dbPath = "minimap.blip_quest_style",
+        values = {
+            shield = LO["On Shields"],
+            plain = LO["Plain"],
+        },
+        width = 200,
+        callback = RefreshMinimap,
+    })
+
     C:AddToggle(basic, {
         label = LO["Show Ping Sender"],
         desc = LO["Show who pinged the minimap, in their class color."],

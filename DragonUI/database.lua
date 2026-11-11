@@ -631,6 +631,7 @@ local defaults = {
             square_top_arrow = true, -- Forever square: north pointer on the top edge
             border_alpha = 1,
             blip_skin = true, -- true = new/modern style, false = old/classic Blizzard style
+            blip_quest_style = "shield", -- new style's quest marks: "shield" (on a shield) | "plain" (the mark alone)
             ping_sender = true, -- Name of whoever pinged the minimap, in their class color
             movement_speed = true, -- Current movement speed under the minimap (widgets.movespeed once dragged)
             latency = true, -- Server round trip under the speed line (widgets.latency once dragged)

@@ -8,6 +8,13 @@
 local addon = select(2, ...);
 local L = addon.L
 
+-- DragonUI's minimap icons; the Quest Icons setting picks the quest marks with or without shields.
+local function DragonBlipTexture()
+    local settings = addon.db and addon.db.profile and addon.db.profile.minimap
+    local plain = settings and settings.blip_quest_style == "plain"
+    return "Interface\\AddOns\\DragonUI\\Textures\\Minimap\\" .. (plain and "objecticons-plain" or "objecticons")
+end
+
 -- ============================================================================
 -- MODULE STATE
 -- ============================================================================
@@ -1279,7 +1286,7 @@ local function ReplaceBlizzardFrame(frame)
         useNewBlipStyle = true -- Default to new style
     end
 
-    local blipTexture = useNewBlipStyle and "Interface\\AddOns\\DragonUI\\Textures\\Minimap\\objecticons" or
+    local blipTexture = useNewBlipStyle and DragonBlipTexture() or
                             'Interface\\Minimap\\ObjectIcons'
     minimapFrame:SetBlipTexture(blipTexture)
 
@@ -1297,7 +1304,7 @@ local function ReplaceBlizzardFrame(frame)
                                addon.db.profile.minimap.blip_skin
             if useNew == nil then useNew = true end
 
-            local tex = useNew and "Interface\\AddOns\\DragonUI\\Textures\\Minimap\\objecticons" or
+            local tex = useNew and DragonBlipTexture() or
                             'Interface\\Minimap\\ObjectIcons'
 
             MinimapModule._settingBlipTexture = true
@@ -3014,7 +3021,7 @@ local function ApplyBlipTextureForFadeVisibility(shouldShow)
     if not settings then return end
     local texture
     if shouldShow then
-        texture = settings.blip_skin and "Interface\\AddOns\\DragonUI\\Textures\\Minimap\\objecticons"
+        texture = settings.blip_skin and DragonBlipTexture()
             or 'Interface\\Minimap\\ObjectIcons'
     else
         texture = "Interface\\AddOns\\DragonUI\\Textures\\Minimap\\blip_blank"
@@ -3296,7 +3303,7 @@ function MinimapModule:UpdateSettings()
             useNewBlipStyle = true -- Default to new style
         end
 
-        local blipTexture = useNewBlipStyle and "Interface\\AddOns\\DragonUI\\Textures\\Minimap\\objecticons" or
+        local blipTexture = useNewBlipStyle and DragonBlipTexture() or
                                 'Interface\\Minimap\\ObjectIcons'
         -- Use re-entrancy guard to avoid triggering our own SetBlipTexture hook
         MinimapModule._settingBlipTexture = true
@@ -3590,7 +3597,7 @@ function MinimapModule:ApplyAllSettings()
 
     --  APPLY BLIP TEXTURE (NEW VS OLD STYLE)
     if settings.blip_skin ~= nil and Minimap then
-        local blipTexture = settings.blip_skin and "Interface\\AddOns\\DragonUI\\Textures\\Minimap\\objecticons" or
+        local blipTexture = settings.blip_skin and DragonBlipTexture() or
                                 'Interface\\Minimap\\ObjectIcons'
         Minimap:SetBlipTexture(blipTexture)
     end
