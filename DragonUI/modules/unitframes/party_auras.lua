@@ -17,8 +17,10 @@ local MAX_SCAN = 40
 -- Frame units, from the top of the party frame.
 local BAR_CLEARANCE = 4   -- below the mana bar, clear of the art's bottom edge
 -- PartyMemberFrame_UpdatePet puts the pet frame (64 wide, with its debuffs inside) 23 in and
--- 43 down, right where the rows start; with a pet out the rows begin just right of it instead.
+-- 43 down, right where the rows start; with a pet out the rows begin just right of it instead,
+-- centred on its 18px portrait (3 down from its top).
 local PET_RIGHT = 23 + 64 + 2
+local PET_PORTRAIT_MIDDLE = 43 + 3 + 9
 local GAP = 2
 
 local BORDER_TEX = "Interface\\Buttons\\UI-Debuff-Overlays"
@@ -65,16 +67,25 @@ local function BarRowStart()
     return mana.x, -mana.y + mana.h + BAR_CLEARANCE
 end
 
--- The smallest top-to-top step that clears the frame and the aura rows; 0 when off. Pets need
--- no room of their own, since the rows move beside them.
+-- Where the first row starts, beside the pet's portrait when the member has a pet out.
+local function RowTop(size, withPet)
+    local _, top = BarRowStart()
+    if withPet then
+        top = math.max(top, PET_PORTRAIT_MIDDLE - size / 2)
+    end
+    return top
+end
+
+-- The smallest top-to-top step that clears the frame and the aura rows; 0 when off. A pet adds
+-- no row of its own: the rows sit beside it, only a little lower to line up with its portrait.
 function PA.GetReserve()
     local cfg = Cfg()
     local rows = RowCount(cfg)
     if rows == 0 then
         return 0
     end
-    local _, top = BarRowStart()
-    return top + rows * (IconSize(cfg) + GAP) + GAP
+    local size = IconSize(cfg)
+    return RowTop(size, GetCVar("showPartyPets") == "1") + rows * (size + GAP) + GAP
 end
 
 -- ===============================================================
@@ -82,7 +93,8 @@ end
 -- ===============================================================
 
 local function IconOnEnter(self)
-    if not self.unit then return end
+    -- Faded-out party frames keep their icons under the mouse; no tooltips from invisible ones.
+    if not self.unit or self:GetEffectiveAlpha() < 0.05 then return end
     GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT")
     if self.harmful then
         GameTooltip:SetUnitDebuff(self.unit, self.index, self.filter)
@@ -207,20 +219,30 @@ local function GetHolder(index)
     return holder
 end
 
--- Right under the bars; beside the member's pet frame while it has one.
+-- The buff row moves up into the debuff row's place while a member has no debuffs.
+local function PlaceBuffRow(holder, size, belowDebuffs)
+    local y = belowDebuffs and -(size + GAP) or 0
+    if holder.buffsY == y then return end
+    holder.buffsY = y
+    holder.buffs:ClearAllPoints()
+    holder.buffs:SetPoint("TOPLEFT", holder, "TOPLEFT", 0, y)
+end
+
+-- Right under the bars; beside the member's pet portrait while it has a pet out.
 local function PlaceHolder(holder, cfg)
     local pet = _G[holder.frame:GetName() .. "PetFrame"]
-    local x, y = BarRowStart()
-    if pet and pet:IsShown() then
+    local withPet = pet and pet:IsShown()
+    local size = IconSize(cfg)
+    local x = BarRowStart()
+    if withPet then
         x = math.max(x, PET_RIGHT)
     end
     holder:ClearAllPoints()
-    holder:SetPoint("TOPLEFT", holder.frame, "TOPLEFT", x, -y)
-    local size = IconSize(cfg)
+    holder:SetPoint("TOPLEFT", holder.frame, "TOPLEFT", x, -RowTop(size, withPet))
     holder.debuffs:ClearAllPoints()
     holder.debuffs:SetPoint("TOPLEFT", holder, "TOPLEFT", 0, 0)
-    holder.buffs:ClearAllPoints()
-    holder.buffs:SetPoint("TOPLEFT", holder, "TOPLEFT", 0, cfg.auras_debuffs and -(size + GAP) or 0)
+    holder.buffsY = nil
+    PlaceBuffRow(holder, size, cfg.auras_debuffs)
 end
 
 -- Blizzard's four debuffs beside the frame would repeat the row, so they go invisible meanwhile.
@@ -267,6 +289,7 @@ local function FillDebuffs(row, unit, cfg, size)
     end
     LayoutRow(row, size)
     HideFrom(row, shown + 1)
+    return shown
 end
 
 local function IsMine(caster)
@@ -309,13 +332,15 @@ local function UpdateMember(index)
     -- Hidden in raids; PARTY_MEMBERS_CHANGED refills the rows when the frames come back.
     if not holder.frame:IsShown() then return end
     local size = IconSize(cfg)
+    local debuffs = 0
     if cfg.auras_debuffs then
         holder.debuffs:Show()
-        FillDebuffs(holder.debuffs, unit, cfg, size)
+        debuffs = FillDebuffs(holder.debuffs, unit, cfg, size)
     else
         holder.debuffs:Hide()
     end
     if cfg.auras_buffs then
+        PlaceBuffRow(holder, size, debuffs > 0)
         holder.buffs:Show()
         FillBuffs(holder.buffs, unit, cfg, size)
     else
