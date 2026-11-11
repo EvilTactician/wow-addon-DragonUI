@@ -1,6 +1,6 @@
 -- Licensed under the MIT License; see LICENSE.
 
--- Party auras: rows of buffs and debuffs under each party frame, like later expansions.
+-- Party auras: one line of debuffs then buffs under each party frame, like later expansions.
 -- Event-driven (UNIT_AURA for party1-4 only); nothing runs per frame. The "RAID" filter is the
 -- client's own: buffs you can cast, debuffs you can dispel.
 
@@ -22,6 +22,7 @@ local BAR_CLEARANCE = 4   -- below the mana bar, clear of the art's bottom edge
 local PET_RIGHT = 23 + 64 + 2
 local PET_PORTRAIT_MIDDLE = 43 + 3 + 9
 local GAP = 2
+local GROUP_GAP = 6       -- between the last debuff and the first buff
 
 local BORDER_TEX = "Interface\\Buttons\\UI-Debuff-Overlays"
 local MINE_COLOR = { 1, 0.82, 0 }
@@ -58,7 +59,7 @@ local function RowCount(cfg)
 end
 
 local function IconSize(cfg)
-    return tonumber(cfg.auras_size) or 16
+    return tonumber(cfg.auras_size) or 14
 end
 
 -- The mana bar from the frame art in use: its left edge and where the rows start under it.
@@ -76,16 +77,21 @@ local function RowTop(size, withPet)
     return top
 end
 
--- The smallest top-to-top step that clears the frame and the aura rows; 0 when off. A pet adds
--- no row of its own: the rows sit beside it, only a little lower to line up with its portrait.
+-- Whether a member's pet frame sits under its frame, where the aura line would go.
+local function PetUnderFrame(pet)
+    return pet and pet:IsShown() and not (UF.IsPartyPetBeside and UF.IsPartyPetBeside())
+end
+
+-- The smallest top-to-top step that clears the frame and the aura line; 0 when off. A pet under
+-- the frame adds no line of its own: the auras sit beside it, lined up with its portrait.
 function PA.GetReserve()
     local cfg = Cfg()
-    local rows = RowCount(cfg)
-    if rows == 0 then
+    if RowCount(cfg) == 0 then
         return 0
     end
     local size = IconSize(cfg)
-    return RowTop(size, GetCVar("showPartyPets") == "1") + rows * (size + GAP) + GAP
+    local petUnder = GetCVar("showPartyPets") == "1" and not (UF.IsPartyPetBeside and UF.IsPartyPetBeside())
+    return RowTop(size, petUnder) + size + GAP
 end
 
 -- ===============================================================
@@ -219,19 +225,19 @@ local function GetHolder(index)
     return holder
 end
 
--- The buff row moves up into the debuff row's place while a member has no debuffs.
-local function PlaceBuffRow(holder, size, belowDebuffs)
-    local y = belowDebuffs and -(size + GAP) or 0
-    if holder.buffsY == y then return end
-    holder.buffsY = y
+-- Buffs follow the debuffs on the same line, and start it while a member has none.
+local function PlaceBuffRow(holder, size, debuffs)
+    local x = debuffs > 0 and debuffs * (size + GAP) - GAP + GROUP_GAP or 0
+    if holder.buffsX == x then return end
+    holder.buffsX = x
     holder.buffs:ClearAllPoints()
-    holder.buffs:SetPoint("TOPLEFT", holder, "TOPLEFT", 0, y)
+    holder.buffs:SetPoint("TOPLEFT", holder, "TOPLEFT", x, 0)
 end
 
--- Right under the bars; beside the member's pet portrait while it has a pet out.
+-- Right under the bars; beside the member's pet portrait while its pet sits under the frame.
 local function PlaceHolder(holder, cfg)
     local pet = _G[holder.frame:GetName() .. "PetFrame"]
-    local withPet = pet and pet:IsShown()
+    local withPet = PetUnderFrame(pet)
     local size = IconSize(cfg)
     local x = BarRowStart()
     if withPet then
@@ -241,8 +247,8 @@ local function PlaceHolder(holder, cfg)
     holder:SetPoint("TOPLEFT", holder.frame, "TOPLEFT", x, -RowTop(size, withPet))
     holder.debuffs:ClearAllPoints()
     holder.debuffs:SetPoint("TOPLEFT", holder, "TOPLEFT", 0, 0)
-    holder.buffsY = nil
-    PlaceBuffRow(holder, size, cfg.auras_debuffs)
+    holder.buffsX = nil
+    PlaceBuffRow(holder, size, 0)
 end
 
 -- Blizzard's four debuffs beside the frame would repeat the row, so they go invisible meanwhile.
@@ -340,7 +346,7 @@ local function UpdateMember(index)
         holder.debuffs:Hide()
     end
     if cfg.auras_buffs then
-        PlaceBuffRow(holder, size, debuffs > 0)
+        PlaceBuffRow(holder, size, debuffs)
         holder.buffs:Show()
         FillBuffs(holder.buffs, unit, cfg, size)
     else
@@ -361,8 +367,10 @@ function PA.Preview(frame)
     end
     local size = IconSize(cfg)
     PlaceHolder(holder, cfg)
+    local debuffs = 0
     if cfg.auras_debuffs then
         local max = math.min(tonumber(cfg.auras_debuffs_max) or 4, #PREVIEW_DEBUFFS)
+        debuffs = max
         for i = 1, max do
             local art = PREVIEW_DEBUFFS[i]
             ShowIcon(GetIcon(holder.debuffs, i), nil, i, nil, true, art[1], nil, DebuffColor(art[2]), false)
@@ -374,6 +382,7 @@ function PA.Preview(frame)
         holder.debuffs:Hide()
     end
     if cfg.auras_buffs then
+        PlaceBuffRow(holder, size, debuffs)
         local max = math.min(tonumber(cfg.auras_buffs_max) or 6, #PREVIEW_BUFFS)
         for i = 1, max do
             local mine = i == 1 and cfg.auras_mark_mine ~= false

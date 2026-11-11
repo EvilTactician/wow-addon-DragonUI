@@ -1089,6 +1089,8 @@ E.Register("party", { settings = Join({
     Slider(T("Horizontal Padding"), "unitframe.party.padding_horizontal", 10, 150, 1, R.party, {
         resize = true,
         hidden = function() return GetDB("unitframe.party.orientation") ~= "horizontal" end }),
+    Check(T("Pets Beside Frames"), "unitframe.party.pets_beside", R.partyAuras, {
+        hidden = function() return GetDB("unitframe.party.orientation") == "horizontal" end }),
     Section(T("Appearance"), true),
     Check(T("Class Color Health"), "unitframe.party.classcolor", R.partyText),
     Drop(T("PvP Icon Style"), "unitframe.party.pvp_icon_style", PVP_STYLES, R.partyText),

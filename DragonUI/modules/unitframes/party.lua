@@ -441,6 +441,40 @@ local function GetOrientation()
     return settings and settings.orientation or 'vertical'
 end
 
+-- Stacked vertically, members' pets go beside their frame instead of in the gap below it; side
+-- by side they stay where Blizzard puts them.
+local function IsPartyPetBeside()
+    local settings = GetSettings()
+    return GetOrientation() == 'vertical' and not (settings and settings.pets_beside == false)
+end
+UF.IsPartyPetBeside = IsPartyPetBeside
+
+-- The pet frame is a secure button, so it only moves out of combat; Blizzard's
+-- PartyMemberFrame_UpdatePet (hooked below) puts it back under the frame on every pet change.
+local function PlacePartyPet(frame)
+    local pet = frame and _G[frame:GetName() .. 'PetFrame']
+    if not pet then return end
+    if InCombatLockdown() then
+        if addon.CombatQueue then
+            addon.CombatQueue:Add("party_pets", function()
+                for i = 1, MAX_PARTY_MEMBERS do
+                    PlacePartyPet(_G['PartyMemberFrame' .. i])
+                end
+            end)
+        end
+        return
+    end
+    pet:ClearAllPoints()
+    if IsPartyPetBeside() then
+        -- Past Blizzard's four debuffs beside the frame, unless the debuff row has replaced them.
+        local settings = GetSettings()
+        local x = (settings and settings.auras_debuffs) and 2 or 2 + 4 * 17 + 2
+        pet:SetPoint("TOPLEFT", frame, "TOPRIGHT", x, -14)
+    else
+        pet:SetPoint("TOPLEFT", frame, "TOPLEFT", 23, pet:IsShown() and -43 or -27)
+    end
+end
+
 -- A method because UpdateWidgets and the editor test sit above the locals this reads.
 function PartyFrames:LayoutFrames()
     if InCombatLockdown() or not self.anchor then return end
@@ -451,6 +485,7 @@ function PartyFrames:LayoutFrames()
         local frame = _G['PartyMemberFrame' .. i]
         if frame then
             PlacePartyMemberFrame(frame, i, step, orientation)
+            PlacePartyPet(frame)
         end
     end
 end
@@ -1329,6 +1364,7 @@ local function StylePartyFrames()
                 frame:SetFrameStrata('BACKGROUND')
                 frame:SetFrameLevel(1)
                 PlacePartyMemberFrame(frame, i, step, orientation)
+                PlacePartyPet(frame)
             end
 
             -- Hide background (and permanently prevent Blizzard's "Party/Arena Background" CVar from showing it)
@@ -2115,6 +2151,12 @@ function PartyFrames:UpdateSettings()
         UF.PartyAuras.RefreshAll()
     end
     self:UpdateEditorPreview()
+end
+
+if PartyMemberFrame_UpdatePet then
+    hooksecurefunc("PartyMemberFrame_UpdatePet", function(self, id)
+        PlacePartyPet(id and _G['PartyMemberFrame' .. id] or self)
+    end)
 end
 
 -- ===============================================================
