@@ -3,8 +3,9 @@
 local addon = select(2, ...)
 local TM = addon.TalentModule
 local ns = TM.ns
+local L = addon.L
 
-local max, min = math.max, math.min
+local max, min, format = math.max, math.min, string.format
 
 -- Storage -----------------------------------------------------------------------------------------
 
@@ -220,6 +221,52 @@ function ns.DominantBuildTree(build, count)
     local points = {}
     for tab = 1, count do points[tab] = ns.TreePoints(build, tab) end
     return ns.DominantTree(points, count)
+end
+
+-- Plans ------------------------------------------------------------------------------------------
+
+-- A build followed while levelling: the tree marks only the points it still wants. Kept per
+-- character and spec group as a copy, so editing or deleting the saved build leaves it alone.
+local function planStore(create)
+    local char = addon.db and addon.db.char
+    if not char then return nil end
+    if create and type(char.talentPlans) ~= "table" then char.talentPlans = {} end
+    return char.talentPlans
+end
+
+function ns.ActivePlan(group)
+    local plans = planStore(false)
+    local plan = plans and plans[group]
+    if type(plan) == "table" and plan.class == ns.PlayerClass() and type(plan.ranks) == "table" then
+        return plan
+    end
+    return nil
+end
+
+function ns.PlanRank(plan, tab, index)
+    return plan and rankIn(plan, tab, index) or 0
+end
+
+function ns.FollowPlan(build, group)
+    local data = ns.TreeData()
+    if not (data and build and ns.NormalizeBuild(build, data)) then
+        ns.Notify(L["that build doesn't fit your talent trees"], "error")
+        return
+    end
+    local ranks = {}
+    for tab, tree in pairs(build.ranks) do
+        ranks[tab] = {}
+        for index, rank in pairs(tree) do ranks[tab][index] = rank end
+    end
+    planStore(true)[group] = { name = build.name, class = ns.PlayerClass(), ranks = ranks }
+    ns.Notify(format(L["Following plan: %s"], build.name or "?"), "ok")
+    ns.Refresh()
+end
+
+function ns.StopPlan(group)
+    local plans = planStore(false)
+    if plans then plans[group] = nil end
+    ns.Refresh()
 end
 
 -- Ranks the character has learned (committed, never preview) in its active group.

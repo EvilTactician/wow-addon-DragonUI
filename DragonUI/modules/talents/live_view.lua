@@ -48,7 +48,7 @@ local function liveState(open, met, shown, maxRank, available)
     return "yellow"
 end
 
-local function readTree(ctx, tab, perTier, available)
+local function readTree(ctx, tab, perTier, available, plan)
     local tabName, _, spent, background, previewSpent = GetTalentTabInfo(tab, ctx.inspect, ctx.pet, ctx.group)
     local treePoints = (spent or 0) + (ctx.preview and (previewSpent or 0) or 0)
     local talents, byCell, deepest = {}, {}, 0
@@ -64,6 +64,8 @@ local function readTree(ctx, tab, perTier, available)
                 exceptional = exceptional and true or false, rank = shown, met = ok and true or false,
                 state = liveState(open, ok, shown, maxRank or 1, available), spendable = available > 0,
                 needs = prereqCells(GetTalentPrereqs(tab, index, ctx.inspect, ctx.pet, ctx.group)),
+                -- Staged points count, so the mark shrinks as points are clicked in.
+                planMissing = plan and max(0, ns.PlanRank(plan, tab, index) - shown) or 0,
             }
             talents[#talents + 1] = entry
             byCell[cellKey(tier, column)] = entry
@@ -94,8 +96,9 @@ function ns.PaintLive()
 
     local view = { count = count, single = ctx.pet, trees = {} }
     local committed, petDeepest = {}, 0
+    local plan = not (ctx.inspect or ctx.pet) and ns.ActivePlan(ctx.group) or nil
     for tab = 1, count do
-        local tree, spent, deepest = readTree(ctx, tab, perTier, available)
+        local tree, spent, deepest = readTree(ctx, tab, perTier, available, plan)
         view.trees[tab] = tree
         committed[tab] = spent
         petDeepest = max(petDeepest, deepest)
@@ -171,6 +174,11 @@ function ns.NodeTooltip(node)
     local ctx = ns.ViewContext()
     GameTooltip:SetOwner(node, "ANCHOR_RIGHT")
     GameTooltip:SetTalent(node.tree, node.index, ctx.inspect, ctx.pet, ctx.group, ctx.preview)
+    if (node.planMissing or 0) > 0 then
+        local plan = ns.ActivePlan(ctx.group)
+        GameTooltip:AddLine(format(L["Plan '%s': %d more"], plan and plan.name or "?", node.planMissing), 1, 0.25, 0.25)
+        GameTooltip:Show()
+    end
 end
 
 function ns.NodeClicked(node, button)

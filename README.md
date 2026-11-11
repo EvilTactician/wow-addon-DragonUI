@@ -53,6 +53,9 @@ It is developed and tested on an AzerothCore server with playerbots.
   waypoint or share it with your party, raid, battleground or guild.
 - **Minimap**: pings stay on the spot that was pinged as you move, and quest givers can
   show as plain marks or on DragonUI's shields.
+- **Talent plans**: follow a saved build while levelling. The talent window marks only
+  the points the build still wants, as a red +N, and the marks disappear as you spend
+  them.
 
 ## 📥 Download
 
