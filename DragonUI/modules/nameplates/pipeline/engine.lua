@@ -338,6 +338,8 @@ function E.SyncConfigSnapshot(skipStackingCVar)
     NP.module._retailBehavior = NP.config.IsRetailBehavior()
     NP.module._healthTextFormat = NP.config.GetHealthTextFormat()
     NP.module._healthTextPlacement = NP.config.GetHealthTextPlacement()
+    NP.module._threatTextPlacement = NP.config.GetThreatTextPlacement()
+    NP.module._threatTextEnabled = cfg.showThreatText == true
     NP.module._plateAlphaCompat = cfg.nameplateAlphaCompat == true
     NP.module._barAlphaCompat = cfg.nameplateBarAlphaCompat == true
     NP.module._clampTargetEnabled = cfg.clampTarget == true

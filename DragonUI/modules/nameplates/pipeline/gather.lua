@@ -168,6 +168,7 @@ end
 local FULL_SYNC_WIDGETS = {
     "Debuffs",
     "ThreatGlow",
+    "ThreatText",
     "RaidMarker",
     "Quest",
     "Elite",
@@ -967,10 +968,52 @@ function NP.gather.SyncName(plateData, unit)
     end
 end
 
+local TARGET_MARKER_TEX = C.MINA_TEX .. "target-marker"
+local TARGET_MARKER_COLORS = {
+    FRIENDLY = { 0.2, 1.0, 0.2 },
+    NEUTRAL = { 1.0, 0.85, 0.1 },
+    HOSTILE = { 1.0, 0.15, 0.15 },
+}
+
+-- Chevron above the target's name. It lives on the name row, so name-only plates keep it.
+-- Only reached when the target changes or the plate refreshes; nothing runs per frame.
+local function SyncTargetMarker(plateData, isTargeted, cfg)
+    local marker = plateData.minaTargetMarker
+    local row = plateData.minaNameRow
+    if not isTargeted or cfg.showTargetMarker ~= true or not row then
+        if marker then marker:Hide() end
+        return
+    end
+    if not marker then
+        marker = row:CreateTexture(nil, "OVERLAY")
+        marker:SetTexture(TARGET_MARKER_TEX)
+        plateData.minaTargetMarker = marker
+    end
+    local reaction = NP.native_style.GetPlateReaction(plateData)
+    local color = TARGET_MARKER_COLORS[reaction] or TARGET_MARKER_COLORS.HOSTILE
+    marker:SetVertexColor(color[1], color[2], color[3])
+    -- The art is twice as wide as tall.
+    local size = cfg.targetMarkerSize or 24
+    marker:SetSize(size, size / 2)
+    -- Enemy debuffs sit above the name, so the chevron clears their row rather than cover it.
+    local y = cfg.targetMarkerOffsetY or 4
+    if reaction ~= "FRIENDLY" and cfg.showDebuffs ~= false and not NP.gather.IsHeadlineActive(plateData) then
+        y = y + (cfg.debuffIconSize or 24) + 2
+    end
+    marker:ClearAllPoints()
+    marker:SetPoint("BOTTOM", row, "TOP", 0, y)
+    marker:Show()
+end
+
 function NP.gather.SyncTargetHighlight(plateData, isTargeted)
     local target = plateData.minaTarget
     if not target then return end
     local cfg = NP.config.GetCfg()
+
+    if isTargeted == nil then
+        isTargeted = NP.identity.IsTargetPlateVisual(plateData)
+    end
+    SyncTargetMarker(plateData, isTargeted, cfg)
 
     -- Headline mode shows only the name: no target glow or arrows.
     if NP.gather.IsHeadlineActive(plateData) then
@@ -978,10 +1021,6 @@ function NP.gather.SyncTargetHighlight(plateData, isTargeted)
         if target.arrowL then target.arrowL:Hide() end
         if target.arrowR then target.arrowR:Hide() end
         return
-    end
-
-    if isTargeted == nil then
-        isTargeted = NP.identity.IsTargetPlateVisual(plateData)
     end
 
     -- The retail selected border replaces this overlay; showing both double-highlights.
@@ -1023,6 +1062,9 @@ NP.widgets.Register("TargetHighlight", {
         NP.gather.SyncTargetHighlight(plateData, visible)
     end,
     Hide = function(plateData)
+        if plateData and plateData.minaTargetMarker then
+            plateData.minaTargetMarker:Hide()
+        end
         local target = plateData and plateData.minaTarget
         if not target then return end
         target:Hide()
@@ -1195,6 +1237,8 @@ function NP.gather.ProcessThreatTransitions()
                 -- Threat tint and health bar stay in sync.
                 NP.gather.SyncHealth(plateData)
             end
+            -- Rides this staggered pass; it throttles itself and hides out of combat.
+            NP.threat.SyncThreatText(plateData)
         end
     end
     -- Flush pass complete: stop running until the next combat.

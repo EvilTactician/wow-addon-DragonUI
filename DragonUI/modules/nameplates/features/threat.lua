@@ -193,6 +193,131 @@ function NP.threat.ApplyThreatGlow(plateData)
     end
 end
 
+-- Threat text: the tooltip's number, plus the tank's lead over the next unit.
+
+-- Group tokens built once, so the lead scan allocates nothing.
+local PARTY_THREAT_UNITS = { "pet" }
+for i = 1, 4 do
+    PARTY_THREAT_UNITS[#PARTY_THREAT_UNITS + 1] = "party" .. i
+    PARTY_THREAT_UNITS[#PARTY_THREAT_UNITS + 1] = "partypet" .. i
+end
+local RAID_THREAT_UNITS = {}
+for i = 1, 40 do
+    RAID_THREAT_UNITS[#RAID_THREAT_UNITS + 1] = "raid" .. i
+    RAID_THREAT_UNITS[#RAID_THREAT_UNITS + 1] = "raidpet" .. i
+end
+
+-- Updates per plate per second; the threat list itself only moves on server ticks.
+local THREAT_TEXT_INTERVAL = 0.2
+-- Below the tank: yellow while safe, orange from this share of the pull threshold.
+local THREAT_TEXT_WARN_PCT = 80
+local THREAT_TEXT_COLORS = {
+    tanking = { 1.0, 0.1, 0.1 },
+    warning = { 1.0, 0.5, 0.0 },
+    safe = { 1.0, 0.85, 0.1 },
+}
+
+-- Highest raw threat any other group member or pet holds on `unit`.
+local function NextHighestThreat(unit)
+    local units, count
+    local raid = GetNumRaidMembers()
+    if raid > 0 then
+        units, count = RAID_THREAT_UNITS, raid * 2
+    else
+        units, count = PARTY_THREAT_UNITS, 1 + GetNumPartyMembers() * 2
+    end
+    local best = 0
+    for i = 1, count do
+        local member = units[i]
+        if UnitExists(member) and not UnitIsUnit(member, "player") then
+            local _, _, _, _, value = UnitDetailedThreatSituation(member, unit)
+            if value and value > best then
+                best = value
+            end
+        end
+    end
+    return best
+end
+
+local function HideThreatText(plateData)
+    local text = plateData.minaThreatText
+    if text and plateData._threatTextShown ~= false then
+        plateData._threatTextShown = false
+        plateData._threatTextValue = nil
+        -- After the name its width shortens the name, so hidden text must also be empty.
+        text:SetText("")
+        text:Hide()
+    end
+end
+
+-- Not tanking: the tooltip's number (100% = you pull). Tanking: your threat over the next
+-- unit's, so 135% is a 35% lead. Only plates matched to a unit have live data; others hide.
+function NP.threat.SyncThreatText(plateData, force)
+    local text = plateData and plateData.minaThreatText
+    if not text then return end
+    local plate = plateData.plate
+    if not NP.module._threatTextEnabled or not NP.module.playerInCombat
+        or not (plate and plate:IsShown())
+        or NP.threat.IsThreatSuppressedContext() or not NP.threat.IsThreatPlate(plateData)
+        or NP.gather.IsHeadlineActive(plateData) or NP.gather.IsTotemIconOnlyActive(plateData) then
+        HideThreatText(plateData)
+        return
+    end
+    local now = GetTime()
+    if not force and plateData._threatTextAt and now < plateData._threatTextAt then
+        return
+    end
+    plateData._threatTextAt = now + THREAT_TEXT_INTERVAL
+
+    local unit = NP.identity.ResolvePlateCastUnit(plateData)
+    if not unit or not UnitExists(unit) or UnitIsUnit(unit, "player") then
+        HideThreatText(plateData)
+        return
+    end
+    local isTanking, _, scaled, _, value = UnitDetailedThreatSituation("player", unit)
+    if not scaled then
+        -- Not on its threat list.
+        HideThreatText(plateData)
+        return
+    end
+    local pct, color
+    if isTanking then
+        local second = NextHighestThreat(unit)
+        pct = (second > 0 and value) and (value / second * 100) or scaled
+        color = THREAT_TEXT_COLORS.tanking
+    else
+        pct = scaled
+        color = scaled >= THREAT_TEXT_WARN_PCT and THREAT_TEXT_COLORS.warning or THREAT_TEXT_COLORS.safe
+    end
+    pct = math.floor(pct + 0.5)
+
+    if plateData._threatTextValue ~= pct or plateData._threatTextColor ~= color
+        or plateData._threatTextShown ~= true then
+        plateData._threatTextValue, plateData._threatTextColor = pct, color
+        plateData._threatTextShown = true
+        text:SetText(pct .. "%")
+        text:SetTextColor(color[1], color[2], color[3])
+        text:Show()
+    end
+end
+
+NP.widgets.Register("ThreatText", {
+    Ensure = function(plateData)
+        return plateData and plateData.minaThreatText ~= nil
+    end,
+    Layout = function(plateData)
+        return plateData and plateData.minaHp ~= nil
+    end,
+    Sync = function(plateData)
+        NP.threat.SyncThreatText(plateData)
+    end,
+    Hide = function(plateData)
+        if plateData then
+            HideThreatText(plateData)
+        end
+    end,
+})
+
 NP.widgets.Register("ThreatGlow", {
     Ensure = function(plateData)
         return plateData and plateData.minaThreatTex ~= nil
