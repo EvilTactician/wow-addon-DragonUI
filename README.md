@@ -14,11 +14,15 @@
 ---
 
 <img width="1917" height="1054" alt="image" src="https://github.com/user-attachments/assets/dd45ed01-a35e-45fb-8426-897d29d35917" />
+<img width="2560" height="1440" alt="image" src="https://github.com/user-attachments/assets/2085114f-8592-46df-8d12-1a229a1e4dee" />
+
 <details>
 <summary><strong>See more screenshots (click to expand)</strong></summary>
 <img width="1918" height="1054" alt="image" src="https://github.com/user-attachments/assets/d29e956a-4831-4a99-b1f3-4f3208a337e2" />
 <img width="1917" height="1054" alt="image" src="https://github.com/user-attachments/assets/761d0315-ac4c-4aff-8e60-75beea91fdb1" />
-<img width="1076" height="745" alt="image" src="https://github.com/user-attachments/assets/47a14b2f-f7ec-46ab-af35-e938d52d0e09" />
+<img width="1771" height="1133" alt="image" src="https://github.com/user-attachments/assets/0d21dc5d-ff85-4b26-bdbf-eb3d7cc1011b" />
+<img width="609" height="267" alt="image" src="https://github.com/user-attachments/assets/cd51bb3a-846b-47a5-b026-07af466c02ea" />
+<img width="569" height="651" alt="image" src="https://github.com/user-attachments/assets/e7cdb59c-9d88-4600-b525-b8fabb325345" />
 </details>
 
 ## 🧭 About This Fork
