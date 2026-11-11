@@ -296,6 +296,11 @@ end
 R.partyText = function()
     if addon.RefreshPartyFrames then addon:RefreshPartyFrames() end
 end
+-- Aura rows change the spacing between members as well as the icons.
+R.partyAuras = function()
+    R.party()
+    R.partyText()
+end
 R.stance = function()
     if addon.RefreshStance then addon.RefreshStance() end
 end
@@ -1090,6 +1095,28 @@ E.Register("party", { settings = Join({
     PortraitRows("party", R.partyText),
     Section(T("Text Display"), true, nil, PreviewTexts("party")),
     TextRows("party", R.partyText),
+    Section(T("Buffs & Debuffs"), true),
+    Check(T("Debuffs Under Frames"), "unitframe.party.auras_debuffs", R.partyAuras, {
+        resize = true, after = function() E.Rebuild() end }),
+    Drop(T("Debuff Filter"), "unitframe.party.auras_debuffs_filter", {
+        { "all", T("All (Dispellable First)") },
+        { "dispellable", T("Only Ones I Can Dispel") },
+    }, R.partyAuras, { disabled = function() return not GetDB("unitframe.party.auras_debuffs") end }),
+    Slider(T("Max Debuffs"), "unitframe.party.auras_debuffs_max", 1, 8, 1, R.partyAuras, {
+        disabled = function() return not GetDB("unitframe.party.auras_debuffs") end }),
+    Check(T("Buffs Under Frames"), "unitframe.party.auras_buffs", R.partyAuras, {
+        resize = true, after = function() E.Rebuild() end }),
+    Drop(T("Buff Filter"), "unitframe.party.auras_buffs_filter", {
+        { "all", T("All") },
+        { "mine", T("Cast by Me") },
+        { "castable", T("Ones I Can Cast") },
+    }, R.partyAuras, { disabled = function() return not GetDB("unitframe.party.auras_buffs") end }),
+    Slider(T("Max Buffs"), "unitframe.party.auras_buffs_max", 1, 10, 1, R.partyAuras, {
+        disabled = function() return not GetDB("unitframe.party.auras_buffs") end }),
+    Check(T("Mark My Buffs"), "unitframe.party.auras_mark_mine", R.partyAuras, {
+        disabled = function() return not GetDB("unitframe.party.auras_buffs") end }),
+    Slider(T("Aura Icon Size"), "unitframe.party.auras_size", 10, 24, 1, R.partyAuras, { resize = true }),
+    Check(T("Duration Swipe"), "unitframe.party.auras_timer", R.partyAuras),
 }) })
 
 E.Register("boss", { settings = Join({

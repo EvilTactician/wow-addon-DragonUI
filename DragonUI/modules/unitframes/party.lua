@@ -97,17 +97,20 @@ local function UpdatePartyAnchorSize()
     local numMembers = MAX_PARTY_MEMBERS -- 4
     local scale = (settings and tonumber(settings.scale)) or 1
 
+    -- Aura rows under the frames need their own room (0 when they are off).
+    local reserve = UF.PartyAuras and UF.PartyAuras.GetReserve() or 0
     if orientation == 'horizontal' then
         local padding = (settings and tonumber(settings.padding_horizontal)) or 50
         local frameWidth = 120
         local frameHeight = 50
         local totalWidth = numMembers * frameWidth + (numMembers - 1) * padding
-        PartyFrames.anchor:SetSize(totalWidth * scale, frameHeight * scale)
+        PartyFrames.anchor:SetSize(totalWidth * scale, math.max(frameHeight, reserve) * scale)
     else
         local padding = (settings and tonumber(settings.padding_vertical)) or 30
         local frameWidth = 130
         local frameHeight = 50
-        local totalHeight = numMembers * frameHeight + (numMembers - 1) * padding
+        local step = math.max(frameHeight + padding, reserve)
+        local totalHeight = (numMembers - 1) * step + math.max(frameHeight, reserve)
         PartyFrames.anchor:SetSize(frameWidth * scale, totalHeight * scale)
     end
 end
@@ -357,6 +360,10 @@ local function HidePartyFramesTest()
             end
         end
     end
+    -- The preview's sample icons give way to the members' real auras.
+    if UF.PartyAuras then
+        UF.PartyAuras.RefreshAll()
+    end
 end
 
 -- ===============================================================
@@ -423,7 +430,8 @@ local function GetPartyStep()
     else
         local pad = (settings and tonumber(settings.padding_vertical)) or 30
         local base = 49   -- height of party frame
-        return base + pad
+        -- The padding grows to fit the aura rows under each frame when they are on.
+        return math.max(base + pad, UF.PartyAuras and UF.PartyAuras.GetReserve() or 0)
     end
 end
 
@@ -1711,6 +1719,10 @@ local function PaintPreviewMember(frame, member)
 
     UpdateHealthText(healthBar, false)
     UpdateManaText(manaBar, false)
+
+    if UF.PartyAuras then
+        UF.PartyAuras.Preview(frame)
+    end
 end
 
 function PartyFrames:UpdateEditorPreview()
@@ -2096,6 +2108,9 @@ function PartyFrames:UpdateSettings()
 
     -- Single source of truth for Show/Hide decisions.
     RefreshAllPartyFrameVisibility()
+    if UF.PartyAuras then
+        UF.PartyAuras.RefreshAll()
+    end
     self:UpdateEditorPreview()
 end
 

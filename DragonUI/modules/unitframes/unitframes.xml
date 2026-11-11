@@ -23,6 +23,7 @@
     <Script file="tot.lua"/>
     <Script file="tof.lua"/>
     <Script file="party.lua"/>
+    <Script file="party_auras.lua"/>
     <Script file="pet.lua"/>
     <Script file="boss.lua"/>
     <Script file="combopoints.lua"/>
