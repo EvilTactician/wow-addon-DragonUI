@@ -725,6 +725,7 @@ L["%d more, zoom in to see them"] = true
 L["Hearthstone"] = true
 L["Click to view on Map"] = true
 L["Set TomTom waypoint"] = true
+L["Share TomTom waypoint"] = true
 L["No map location for '%s' to set a TomTom waypoint."] = true
 L["Search Quest Log"] = true
 L["World map module disabled: %s replaces the same map frame."] = true
