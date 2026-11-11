@@ -1242,6 +1242,13 @@ local function BuildTargetSubTab(scroll)
         dbPath = DB .. ".showTargetMarker",
         callback = RefreshAndRebuildNameplates,
     })
+    C:AddToggle(targetThreat, {
+        label = LO["Marker on Friendly Targets"],
+        desc = LO["Friendly units only have a nameplate while the game's friendly nameplates are on. This turns them on while you target a friendly unit and hides every friendly plate except your target. If you keep friendly nameplates on yourself, they are left as they are."],
+        dbPath = DB .. ".targetMarkerFriendly",
+        disabled = IsTargetMarkerOff,
+        callback = RefreshNameplates,
+    })
     local markerRow = C:AddRow(targetThreat)
     C:AddSlider(markerRow, {
         label = LO["Marker Size"],

@@ -1133,6 +1133,7 @@ local defaults = {
                 showTargetMarker = false, -- chevron above the target's name, tinted by reaction; shows on name-only plates too
                 targetMarkerSize = 24, -- chevron width in pixels
                 targetMarkerOffsetY = 4, -- height above the name (enemies with debuffs on also clear the debuff row)
+                targetMarkerFriendly = false, -- switch friendly plates on only while a friendly unit is targeted, others hidden
                 showDebuffs = true,
                 maxDebuffs = 5,
                 debuffIconSize = 24, -- debuff icon size in pixels

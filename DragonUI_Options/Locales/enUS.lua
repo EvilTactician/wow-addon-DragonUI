@@ -1403,6 +1403,8 @@ L["Show only your target's hostile nameplate. In combat, also show hostile NPCs 
 L["Left/right arrows on the targeted nameplate."] = true
 L["Show Target Marker"] = true
 L["A chevron above your target's name: green for friendly, yellow for neutral, red for hostile. Also shows on name-only plates."] = true
+L["Marker on Friendly Targets"] = true
+L["Friendly units only have a nameplate while the game's friendly nameplates are on. This turns them on while you target a friendly unit and hides every friendly plate except your target. If you keep friendly nameplates on yourself, they are left as they are."] = true
 L["Marker Size"] = true
 L["Marker Height"] = true
 L["Height above the name. On enemies with debuffs shown, it is measured from above the debuff row."] = true
