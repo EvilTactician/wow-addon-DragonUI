@@ -449,12 +449,41 @@ local function IsPartyPetBeside()
 end
 UF.IsPartyPetBeside = IsPartyPetBeside
 
+-- Blizzard's buffs and debuffs beside the frame start after a pet sitting there.
+local PET_BESIDE_WIDTH = 64
+
+local function PlaceSideAuras(frame, petBeside)
+    local name = frame:GetName()
+    local pet = _G[name .. 'PetFrame']
+    local x = 2
+    if petBeside and pet and pet:IsShown() then
+        x = x + PET_BESIDE_WIDTH + 2
+    end
+    for auraIndex = 1, 4 do
+        local offset = x + (auraIndex - 1) * 17
+        local buff = _G[name .. 'Buff' .. auraIndex]
+        if buff then
+            buff:ClearAllPoints()
+            buff:SetPoint('TOPLEFT', frame, 'TOPRIGHT', offset, -2)
+            buff:SetSize(15, 15)
+        end
+        local debuff = _G[name .. 'Debuff' .. auraIndex]
+        if debuff then
+            debuff:ClearAllPoints()
+            debuff:SetPoint('TOPLEFT', frame, 'TOPRIGHT', offset, -19)
+            debuff:SetSize(15, 15)
+        end
+    end
+end
+
 -- The pet frame is a secure button, so it only moves out of combat; Blizzard's
 -- PartyMemberFrame_UpdatePet (hooked below) puts it back under the frame on every pet change.
 local function PlacePartyPet(frame)
     local pet = frame and _G[frame:GetName() .. 'PetFrame']
     if not pet then return end
     if InCombatLockdown() then
+        -- The pet stays where Blizzard put it (under the frame) until combat ends.
+        PlaceSideAuras(frame, false)
         if addon.CombatQueue then
             addon.CombatQueue:Add("party_pets", function()
                 for i = 1, MAX_PARTY_MEMBERS do
@@ -465,14 +494,13 @@ local function PlacePartyPet(frame)
         return
     end
     pet:ClearAllPoints()
-    if IsPartyPetBeside() then
-        -- Past Blizzard's four debuffs beside the frame, unless the debuff row has replaced them.
-        local settings = GetSettings()
-        local x = (settings and settings.auras_debuffs) and 2 or 2 + 4 * 17 + 2
-        pet:SetPoint("TOPLEFT", frame, "TOPRIGHT", x, -14)
+    local beside = IsPartyPetBeside()
+    if beside then
+        pet:SetPoint("TOPLEFT", frame, "TOPRIGHT", 2, -14)
     else
         pet:SetPoint("TOPLEFT", frame, "TOPLEFT", 23, pet:IsShown() and -43 or -27)
     end
+    PlaceSideAuras(frame, beside)
 end
 
 -- A method because UpdateWidgets and the editor test sit above the locals this reads.
@@ -572,24 +600,12 @@ local function RepositionBlizzardBuffs()
     for i = 1, MAX_PARTY_MEMBERS do
         local frame = _G['PartyMemberFrame' .. i]
         if frame then
-            -- Position auras fully outside frame right edge
+            -- Position auras fully outside frame right edge (after a pet beside it)
             -- Buff row at top, debuff row below (no vertical overlap between members)
-            for auraIndex = 1, 4 do
-                local buff = _G['PartyMemberFrame' .. i .. 'Buff' .. auraIndex]
-                local debuff = _G['PartyMemberFrame' .. i .. 'Debuff' .. auraIndex]
-
-                if buff then
-                    buff:ClearAllPoints()
-                    buff:SetPoint('TOPLEFT', frame, 'TOPRIGHT', 2 + (auraIndex - 1) * 17, -2)
-                    buff:SetSize(15, 15)
-                end
-
-                if debuff then
-                    debuff:ClearAllPoints()
-                    debuff:SetPoint('TOPLEFT', frame, 'TOPRIGHT', 2 + (auraIndex - 1) * 17, -19)
-                    debuff:SetSize(15, 15)
-                end
-            end
+            local pet = _G[frame:GetName() .. 'PetFrame']
+            local petBeside = IsPartyPetBeside() and pet and pet:GetLeft() and frame:GetRight()
+                and pet:GetLeft() > frame:GetRight() - 1
+            PlaceSideAuras(frame, petBeside)
         end
     end
 end
