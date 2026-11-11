@@ -925,6 +925,16 @@ local function BuildEnhancementsTab(scroll)
         requiresReload = false,
     })
 
+    C:AddToggle(lootRollSection, {
+        label = LO["Roll Tracker"],
+        desc = LO["List each roll beside the roll windows: who chose Need, Greed, Disenchant or Pass, who is still choosing, and the winner. Rolls that get no Blizzard window (more than four at once) get buttons here. Hover a roll for every choice and roll number."],
+        dbPath = "lootroll.voteTracker",
+        requiresReload = false,
+        callback = function()
+            if addon.RefreshLootRollTracker then addon.RefreshLootRollTracker() end
+        end,
+    })
+
     -- ====================================================================
     -- AUTO-ACCEPT
     -- ====================================================================

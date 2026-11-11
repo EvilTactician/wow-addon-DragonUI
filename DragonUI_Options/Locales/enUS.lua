@@ -58,6 +58,8 @@ L["How unit frames, nameplates and the resource display shorten large numbers."]
 
 -- Loot Roll
 L["Auto Greed/DE"] = true
+L["Roll Tracker"] = true
+L["List each roll beside the roll windows: who chose Need, Greed, Disenchant or Pass, who is still choosing, and the winner. Rolls that get no Blizzard window (more than four at once) get buttons here. Hover a roll for every choice and roll number."] = true
 L["Automatically select greed or disenchant (when available) on green quality items. This will only work if you are the max level."] = true
 
 -- Settings window

@@ -1327,3 +1327,10 @@ L["More settings..."] = true
 -- Loot triage (bags_triage.lua)
 L["Loot Triage will never suggest deleting %s."] = true
 L["Loot Triage may suggest deleting %s again."] = true
+
+-- Loot roll tracker
+L["You"] = true
+L["Waiting"] = true
+L["Everyone passed"] = true
+L["Won by %s"] = true
+L["No roll window: choose here (%ds)"] = true
