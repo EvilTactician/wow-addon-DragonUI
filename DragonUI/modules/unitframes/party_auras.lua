@@ -15,10 +15,12 @@ local MAX_MEMBERS = 4
 local MAX_SCAN = 40
 
 -- Frame units, from the top of the party frame.
-local ROW_X = 41          -- the mana bar's left edge, so the icons line up under the bars
-local FRAME_BOTTOM = 47   -- the party art ends here; Blizzard's party pet frame starts here
-local PET_HEIGHT = 27     -- PartyMemberPetFrameTemplate is 26 tall, plus a gap
+local BAR_CLEARANCE = 4   -- below the mana bar, clear of the art's bottom edge
+local PET_BOTTOM = 74     -- PartyMemberPetFrameTemplate: 26 tall at 47 down, plus a gap
 local GAP = 2
+
+-- Classes with a pet that gets a party pet frame (DK ghoul and mage water elemental included).
+local PET_CLASSES = { HUNTER = true, WARLOCK = true, DEATHKNIGHT = true, MAGE = true }
 
 local BORDER_TEX = "Interface\\Buttons\\UI-Debuff-Overlays"
 local MINE_COLOR = { 1, 0.82, 0 }
@@ -43,8 +45,10 @@ local PREVIEW_BUFFS = {
 local UNIT_INDEX = { party1 = 1, party2 = 2, party3 = 3, party4 = 4 }
 
 local holders = {}
--- Debuffs already shown by the dispellable pass, name -> expiration; wiped, never reallocated.
+-- Auras already shown by a first pass, name -> expiration; wiped, never reallocated.
 local seen = {}
+-- Whether the spacing keeps room for a party pet; only true with a pet class in the group.
+local petRoom = false
 
 local function Cfg()
     return UF.GetConfig("party")
@@ -58,6 +62,29 @@ local function IconSize(cfg)
     return tonumber(cfg.auras_size) or 16
 end
 
+-- The mana bar from the frame art in use: its left edge and where the rows start under it.
+local function BarRowStart()
+    local mana = UF.GetFrameSkin().party.bars.mana
+    return mana.x, -mana.y + mana.h + BAR_CLEARANCE
+end
+
+local function PetsShown()
+    return GetCVar("showPartyPets") == "1"
+end
+
+-- Pets come and go in combat, when the frames cannot move, so the room is kept for the group's
+-- pet classes rather than for the pets themselves.
+local function GroupNeedsPetRoom()
+    if not PetsShown() then return false end
+    for i = 1, GetNumPartyMembers() do
+        local _, class = UnitClass("party" .. i)
+        if PET_CLASSES[class] or UnitExists("partypet" .. i) then
+            return true
+        end
+    end
+    return false
+end
+
 -- The smallest top-to-top step that clears the frame, a party pet and the aura rows; 0 when off.
 function PA.GetReserve()
     local cfg = Cfg()
@@ -65,8 +92,11 @@ function PA.GetReserve()
     if rows == 0 then
         return 0
     end
-    local pets = GetCVar("showPartyPets") == "1"
-    return FRAME_BOTTOM + (pets and PET_HEIGHT or 0) + rows * (IconSize(cfg) + GAP) + GAP
+    local _, top = BarRowStart()
+    if petRoom then
+        top = math.max(top, PET_BOTTOM)
+    end
+    return top + rows * (IconSize(cfg) + GAP) + GAP
 end
 
 -- ===============================================================
@@ -199,12 +229,15 @@ local function GetHolder(index)
     return holder
 end
 
--- Under the bars, and under the member's pet frame when it has one.
+-- Right under the bars, or under the member's pet frame while it has one.
 local function PlaceHolder(holder, cfg)
     local pet = _G[holder.frame:GetName() .. "PetFrame"]
-    local y = FRAME_BOTTOM + ((pet and pet:IsShown()) and PET_HEIGHT or 0)
+    local x, y = BarRowStart()
+    if pet and pet:IsShown() then
+        y = math.max(y, PET_BOTTOM)
+    end
     holder:ClearAllPoints()
-    holder:SetPoint("TOPLEFT", holder.frame, "TOPLEFT", ROW_X, -y)
+    holder:SetPoint("TOPLEFT", holder.frame, "TOPLEFT", x, -y)
     local size = IconSize(cfg)
     holder.debuffs:ClearAllPoints()
     holder.debuffs:SetPoint("TOPLEFT", holder, "TOPLEFT", 0, 0)
@@ -258,20 +291,29 @@ local function FillDebuffs(row, unit, cfg, size)
     HideFrom(row, shown + 1)
 end
 
+local function IsMine(caster)
+    return caster == "player" or caster == "pet" or caster == "vehicle"
+end
+
+-- Yours first, so your own buffs and HoTs are never pushed off a full row; then everyone else's.
 local function FillBuffs(row, unit, cfg, size)
     local max = tonumber(cfg.auras_buffs_max) or 6
     local filter = BUFF_FILTERS[cfg.auras_buffs_filter or "all"]
     local markMine = cfg.auras_mark_mine ~= false
     local showTimer = cfg.auras_timer ~= false
     local shown = 0
-    for i = 1, MAX_SCAN do
-        if shown >= max then break end
-        local name, _, texture, count, _, duration, expires, caster = UnitBuff(unit, i, filter)
-        if not name then break end
-        shown = shown + 1
-        local mine = markMine and (caster == "player" or caster == "pet" or caster == "vehicle")
-        ShowIcon(GetIcon(row, shown), unit, i, filter, false, texture, count, mine and MINE_COLOR or nil,
-            showTimer, duration, expires)
+    for pass = 1, (filter == "PLAYER") and 1 or 2 do
+        for i = 1, MAX_SCAN do
+            if shown >= max then break end
+            local name, _, texture, count, _, duration, expires, caster = UnitBuff(unit, i, filter)
+            if not name then break end
+            local mine = IsMine(caster)
+            if pass == 1 and (mine or filter == "PLAYER") or pass == 2 and not mine then
+                shown = shown + 1
+                ShowIcon(GetIcon(row, shown), unit, i, filter, false, texture, count,
+                    (markMine and mine) and MINE_COLOR or nil, showTimer, duration, expires)
+            end
+        end
     end
     LayoutRow(row, size)
     HideFrom(row, shown + 1)
@@ -348,6 +390,7 @@ local events = CreateFrame("Frame")
 
 -- Settings changed: re-place every row, refill it, and only listen for auras while a row is on.
 function PA.RefreshAll()
+    PA.SyncPetRoom()
     local cfg = Cfg()
     local active = RowCount(cfg) > 0
     for index = 1, MAX_MEMBERS do
@@ -361,6 +404,7 @@ function PA.RefreshAll()
     end
     if active then
         events:RegisterEvent("UNIT_AURA")
+        events:RegisterEvent("UNIT_PET")
         events:RegisterEvent("PARTY_MEMBERS_CHANGED")
         events:RegisterEvent("PLAYER_ENTERING_WORLD")
     else
@@ -368,11 +412,38 @@ function PA.RefreshAll()
     end
 end
 
+-- A pet class joining or leaving changes the spacing; frames only move out of combat.
+local function RelayoutParty()
+    local party = addon.PartyFrames
+    if not (party and party.UpdateWidgets) then return end
+    if InCombatLockdown() then
+        if addon.CombatQueue then
+            addon.CombatQueue:Add("party_auras_layout", RelayoutParty)
+        end
+        return
+    end
+    party:UpdateWidgets()
+end
+
+function PA.SyncPetRoom()
+    local needed = GroupNeedsPetRoom()
+    if needed ~= petRoom then
+        petRoom = needed
+        if RowCount(Cfg()) > 0 then
+            RelayoutParty()
+        end
+    end
+end
+
 events:SetScript("OnEvent", function(_, event, unit)
     if event == "UNIT_AURA" then
         local index = UNIT_INDEX[unit]
         if index then UpdateMember(index) end
+    elseif event == "UNIT_PET" then
+        -- A pet showing up can be the first sign of a pet class whose class was not known yet.
+        if UNIT_INDEX[unit] then PA.SyncPetRoom() end
     else
+        PA.SyncPetRoom()
         PA.RefreshAll()
     end
 end)
