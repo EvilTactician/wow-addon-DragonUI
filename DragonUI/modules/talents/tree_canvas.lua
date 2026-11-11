@@ -139,6 +139,14 @@ local function newNode(tree)
     rank:SetPoint("BOTTOMRIGHT", node, "BOTTOMRIGHT", 2, -1)
     node.rank = rank
 
+    -- Points a followed plan still wants here; opposite corner to the rank so both can show.
+    local plan = node:CreateFontString(nil, "OVERLAY")
+    plan:SetFont(STANDARD_TEXT_FONT, 12, "THICKOUTLINE")
+    plan:SetShadowOffset(1, -1)
+    plan:SetPoint("TOPRIGHT", node, "TOPRIGHT", 2, 1)
+    plan:SetTextColor(1, 0.15, 0.15)
+    node.plan = plan
+
     node:SetScript("OnEnter", nodeEnter)
     node:SetScript("OnLeave", nodeLeave)
     node:SetScript("OnClick", nodeClick)
@@ -207,6 +215,8 @@ local function dressNode(node, entry)
         end
     end
     node.rank:SetText((entry.rank or 0) > 0 and entry.rank or "")
+    node.planMissing = entry.planMissing or 0
+    node.plan:SetText(node.planMissing > 0 and ("+" .. node.planMissing) or "")
 
     node.state = state
     node.glints = state ~= "green"

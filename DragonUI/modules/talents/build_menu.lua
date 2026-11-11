@@ -78,6 +78,7 @@ end
 local function perBuildEntries(build)
     return {
         { text = L["Load onto character"], func = function() ns.LoadOntoCharacter(build) end },
+        { text = L["Follow as plan"], func = function() ns.FollowPlan(build, ns.viewGroup) end },
         { text = L["Edit"], func = function() ns.EnterEditor(build) end },
         { text = L["Rename"], func = function() ns.RenameBuild(build) end },
         { text = L["Share"], menu = function() return shareEntries(build) end },
@@ -108,6 +109,13 @@ local function rootEntries()
             func = function() StaticPopup_Show("DUI_TALENT_BUILD_LEVEL", ns.LevelCap(), nil, editing) end,
         })
         add({ text = L["Exit Editor"], func = function() ns.RequestExitEditor() end })
+        add({ isDivider = true })
+    end
+
+    local plan = not editing and ns.ActivePlan(ns.viewGroup)
+    if plan then
+        add({ text = format(L["Plan: %s"], plan.name or "?"), isTitle = true })
+        add({ text = L["Stop following plan"], func = function() ns.StopPlan(ns.viewGroup) end })
         add({ isDivider = true })
     end
 
