@@ -1,13 +1,11 @@
-# 🐉 DragonUI for 3.3.5a
+# 🐉 DragonUI for 3.3.5a (EvilTactician's fork)
 
 <div align="center">
 
 ![Interface Version](https://img.shields.io/badge/Interface-30300-blue)
 ![WoW Version](https://img.shields.io/badge/WoW-3.3.5a-orange)
-[![Version](https://img.shields.io/badge/Version-2.5-green)](https://github.com/NeticSoul/DragonUI/releases/tag/v2.5)
+[![Version](https://img.shields.io/badge/Version-3.1.0-green)](https://github.com/EvilTactician/wow-addon-DragonUI)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
-[![Ko-fi](https://img.shields.io/badge/Support-Ko--fi-ff5e5b?logo=ko-fi)](https://ko-fi.com/neticsoul)
-![Downloads](https://img.shields.io/github/downloads/NeticSoul/DragonUI/total?label=Downloads&color=%23a400ff)
 
 **A modular, retail-inspired UI addon for World of Warcraft 3.3.5a (Wrath of the Lich King).**
 
@@ -23,27 +21,56 @@
 <img width="1076" height="745" alt="image" src="https://github.com/user-attachments/assets/47a14b2f-f7ec-46ab-af35-e938d52d0e09" />
 </details>
 
+## 🧭 About This Fork
+
+DragonUI is created by [NeticSoul](https://github.com/NeticSoul/DragonUI), with
+community contributions. This fork builds on
+[buildthehomelab's customized edition](https://github.com/buildthehomelab/wow-addon-DragonUI),
+which adds integrations for AzerothCore modules (guild levels, professions, server
+currencies, achievement rewards), and keeps taking NeticSoul's bug fixes as they land.
+It is developed and tested on an AzerothCore server with playerbots.
+
+### What this fork adds
+
+- **NeticSoul's 3.0 fixes**: his bug and performance fixes merged in, plus a few of his
+  newer features (double-click to summon pets and mounts, party buff tooltip settings,
+  stand-in party members in the editor, forgetting an alt's saved gold and items). His
+  retail action-button art is left out to stay compatible with the module integrations.
+- **Threat on nameplates**: an optional threat percentage on enemy nameplates. Below the
+  tank it shows the tooltip's number (100% pulls aggro), yellow while safe and orange from
+  80%; while you tank it turns red and shows your lead over the next player or pet.
+- **Target marker**: an optional chevron above your target's name, green for friendly,
+  yellow for neutral and red for hostile, with size and height settings. It can also turn
+  on a friendly target's nameplate while it is targeted, keeping every other friendly
+  plate hidden.
+- **Party buffs and debuffs**: an optional line of debuffs, then buffs, under each party
+  frame, with durations. Debuffs you can dispel come first; buffs can be limited to the
+  ones you cast or can cast, and yours get a gold border.
+- **Party pets beside their owners**: in the vertical layout, members' pets sit to the
+  right of their frame instead of in the gap below it.
+- **Quest tracker**: quest titles coloured by difficulty, like the quest log and map.
+  Right-click a quest to set a [TomTom](https://www.curseforge.com/wow/addons/tomtom)
+  waypoint or share it with your party, raid, battleground or guild.
+- **Minimap**: pings stay on the spot that was pinged as you move, and quest givers can
+  show as plain marks or on DragonUI's shields.
+
 ## 📥 Download
 
-### This fork
-
-This repository is EvilTactician's fork of buildthehomelab's customized fork. Download the
+Download the
 [main branch](https://github.com/EvilTactician/wow-addon-DragonUI/archive/refs/heads/main.zip)
 and install both `DragonUI` and `DragonUI_Options` from that archive. Back up your
 `WTF` settings before updating. Report fork-specific bugs in
 [this repository's issue tracker](https://github.com/EvilTactician/wow-addon-DragonUI/issues).
 
-The upstream downloads below are the original NeticSoul edition; they do not
-include this fork's custom guild, professions, currency and achievement integrations.
-
 ### Original upstream edition
+
+NeticSoul's own edition does not include this fork's additions or buildthehomelab's
+module integrations.
 
 | Method | Link |
 |--------|------|
-| **Latest stable release** | [Download](https://github.com/NeticSoul/DragonUI/releases/download/v2.5/DragonUI-2.5.zip) |
+| **Latest stable release** | [Releases](https://github.com/NeticSoul/DragonUI/releases/latest) |
 | **Cutting-edge (main branch)** | [Download](https://github.com/NeticSoul/DragonUI/archive/refs/heads/main.zip) |
-
-> The main branch always contains the most recent features and fixes. Releases are periodic snapshots that have been tested more thoroughly.
 
 ## 📦 Installation
 
