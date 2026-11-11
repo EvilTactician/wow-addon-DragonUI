@@ -965,6 +965,7 @@ L["Vertical"] = true
 L["Horizontal"] = true
 L["Vertical Padding"] = true
 L["Buffs & Debuffs"] = true
+L["Pets Beside Frames"] = true
 L["Debuffs Under Frames"] = true
 L["Debuff Filter"] = true
 L["All (Dispellable First)"] = true

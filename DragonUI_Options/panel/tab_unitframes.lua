@@ -898,6 +898,13 @@ local function BuildPartySection(scroll)
         callback = refreshParty,
     })
 
+    C:AddToggle(s, {
+        label = LO["Pets Beside Frames"],
+        desc = LO["In vertical mode, members' pets sit to the right of their frame instead of in the gap below it. To hide party pets altogether, untick Party Members' Pets in Blizzard's Interface options, under Unit Frames."],
+        dbPath = "unitframe.party.pets_beside",
+        callback = refreshParty,
+    })
+
     C:AddDropdown(s, {
         label = LO["Buff Tooltip"],
         desc = LO["When to show the box of buffs and debuffs that opens as you hover a party member."],
@@ -912,7 +919,7 @@ local function BuildPartySection(scroll)
 
     -- Rows of auras under each member; the space between members grows to fit them.
     C:AddHeading(s, LO["Buffs & Debuffs"])
-    C:AddDescription(s, LO["Rows of buffs and debuffs under each party frame, with their remaining time. The space between members grows to fit them, below any party pet."])
+    C:AddDescription(s, LO["A line of debuffs, then buffs, under each party frame, with their remaining time. The space between members only grows if the line does not fit."])
     C:AddToggle(s, {
         label = LO["Debuffs Under Frames"],
         desc = LO["Replaces the four small debuffs beside each frame. Borders show the debuff type: blue Magic, purple Curse, brown Disease, green Poison."],
