@@ -910,6 +910,77 @@ local function BuildPartySection(scroll)
         width = 200,
     })
 
+    -- Rows of auras under each member; the space between members grows to fit them.
+    C:AddHeading(s, LO["Buffs & Debuffs"])
+    C:AddDescription(s, LO["Rows of buffs and debuffs under each party frame, with their remaining time. The space between members grows to fit them, below any party pet."])
+    C:AddToggle(s, {
+        label = LO["Debuffs Under Frames"],
+        desc = LO["Replaces the four small debuffs beside each frame. Borders show the debuff type: blue Magic, purple Curse, brown Disease, green Poison."],
+        dbPath = "unitframe.party.auras_debuffs",
+        callback = refreshParty,
+    })
+    C:AddDropdown(s, {
+        label = LO["Debuff Filter"],
+        desc = LO["Debuffs you can dispel always come first, so they are never pushed off the row."],
+        dbPath = "unitframe.party.auras_debuffs_filter",
+        values = {
+            all = LO["All (Dispellable First)"],
+            dispellable = LO["Only Ones I Can Dispel"],
+        },
+        width = 220,
+        callback = refreshParty,
+    })
+    C:AddSlider(s, {
+        label = LO["Max Debuffs"],
+        dbPath = "unitframe.party.auras_debuffs_max",
+        min = 1, max = 8, step = 1,
+        width = 200,
+        callback = refreshParty,
+    })
+    C:AddToggle(s, {
+        label = LO["Buffs Under Frames"],
+        dbPath = "unitframe.party.auras_buffs",
+        callback = refreshParty,
+    })
+    C:AddDropdown(s, {
+        label = LO["Buff Filter"],
+        desc = LO["Ones I Can Cast shows only buffs your class can put on them, which makes a missing one easy to spot."],
+        dbPath = "unitframe.party.auras_buffs_filter",
+        values = {
+            all = LO["All"],
+            mine = LO["Cast by Me"],
+            castable = LO["Ones I Can Cast"],
+        },
+        width = 220,
+        callback = refreshParty,
+    })
+    C:AddSlider(s, {
+        label = LO["Max Buffs"],
+        dbPath = "unitframe.party.auras_buffs_max",
+        min = 1, max = 10, step = 1,
+        width = 200,
+        callback = refreshParty,
+    })
+    C:AddToggle(s, {
+        label = LO["Mark My Buffs"],
+        desc = LO["A gold border on buffs you cast, so you can see what you are keeping up."],
+        dbPath = "unitframe.party.auras_mark_mine",
+        callback = refreshParty,
+    })
+    C:AddSlider(s, {
+        label = LO["Aura Icon Size"],
+        dbPath = "unitframe.party.auras_size",
+        min = 10, max = 24, step = 1,
+        width = 200,
+        callback = refreshParty,
+    })
+    C:AddToggle(s, {
+        label = LO["Duration Swipe"],
+        desc = LO["Darken each icon clockwise as it runs out."],
+        dbPath = "unitframe.party.auras_timer",
+        callback = refreshParty,
+    })
+
     C:AddHeading(s, LO["Visibility"])
     C:AddVisibilityFadeToggles(s, {
         dbPrefix = "unitframe.party",
