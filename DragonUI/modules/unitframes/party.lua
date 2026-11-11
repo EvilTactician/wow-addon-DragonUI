@@ -2095,6 +2095,9 @@ function PartyFrames:UpdateSettings()
                 local hoverFrames = { frame }
                 if frame.DragonUI_HealthHover then table.insert(hoverFrames, frame.DragonUI_HealthHover) end
                 if frame.DragonUI_ManaHover then table.insert(hoverFrames, frame.DragonUI_ManaHover) end
+                -- Hovering a member's pet counts as hovering the member (it fades with the frame).
+                local petFrame = _G[frame:GetName() .. 'PetFrame']
+                if petFrame then table.insert(hoverFrames, petFrame) end
                 addon.VisibilityFade.Register("party" .. i, frame, {
                     dbTable = function() return addon.UF.GetConfig("party") end,
                     hoverFrames = hoverFrames,
