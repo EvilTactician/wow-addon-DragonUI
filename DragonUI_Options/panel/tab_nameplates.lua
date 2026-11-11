@@ -762,6 +762,58 @@ local function BuildHealthSubTab(scroll)
         return ModernOwnsText() or IsHealthTextPositionLocked()
             or (GetNP().healthTextPosition or "afterName") == "afterName"
     end
+
+    -- Health and threat text never share a spot: picking the other's spot swaps the two.
+    -- Split puts the health value left and its percent right.
+    local function HealthOccupies(spot, placement)
+        local fmt = GetNP().healthTextFormat or "percent"
+        if fmt == "none" then return false end
+        if placement == "barSplit" then
+            return (spot == "barLeft" and fmt ~= "percent") or (spot == "barRight" and fmt ~= "value")
+        end
+        return spot == placement
+    end
+    local HEALTH_SPOTS = { afterName = true, barCenter = true, barRight = true, barSplit = true }
+    local HEALTH_FALLBACKS = { "afterName", "barRight", "barCenter" }
+    local THREAT_FALLBACKS = { "barRight", "barCenter", "barLeft", "afterName" }
+    local function IsThreatTextOff()
+        return GetNP().showThreatText ~= true
+    end
+    local function IsThreatTextPositionLocked()
+        return IsThreatTextOff() or IsNameInsideBar()
+    end
+    local function SetThreatPosition(value)
+        local old = GetNP().threatTextPosition or "barRight"
+        C:SetDBValue(DB .. ".threatTextPosition", value)
+        local health = GetNP().healthTextPosition or "afterName"
+        if not HealthOccupies(value, health) then
+            RefreshDependents()
+            return
+        end
+        local moved = HEALTH_SPOTS[old] and not HealthOccupies(value, old) and old or nil
+        for _, spot in ipairs(HEALTH_FALLBACKS) do
+            if moved then break end
+            if not HealthOccupies(value, spot) then moved = spot end
+        end
+        C:SetDBValue(DB .. ".healthTextPosition", moved)
+        RebuildKeepingScroll()
+    end
+    local function SetHealthPosition(value)
+        local old = GetNP().healthTextPosition or "afterName"
+        C:SetDBValue(DB .. ".healthTextPosition", value)
+        local threat = GetNP().threatTextPosition or "barRight"
+        if IsThreatTextOff() or not HealthOccupies(threat, value) then
+            RefreshDependents()
+            return
+        end
+        local moved = old ~= "barSplit" and not HealthOccupies(old, value) and old or nil
+        for _, spot in ipairs(THREAT_FALLBACKS) do
+            if moved then break end
+            if not HealthOccupies(spot, value) then moved = spot end
+        end
+        C:SetDBValue(DB .. ".threatTextPosition", moved)
+        RebuildKeepingScroll()
+    end
     local function HasNoFriendlyClassBars()
         local np = GetNP()
         return not (np.friendlyClassColors or np.partyClassColors)
@@ -922,7 +974,7 @@ local function BuildHealthSubTab(scroll)
         },
         width = 260,
         disabled = IsHealthTextPositionLocked,
-        callback = RefreshDependents,
+        setFunc = SetHealthPosition,
     }), IsHealthTextPositionLocked)
     Depends(C:AddSlider(textRow, {
         label = LO["Font Size"],
@@ -937,6 +989,33 @@ local function BuildHealthSubTab(scroll)
     if IsNameInsideBar() then
         C:AddDescription(healthTextSection, LO["The name is inside the health bar, so the health text sits at the bar's right end, after the name."])
     end
+
+    local threatTextSection = C:AddSection(scroll, LO["Threat Text"])
+    C:AddDescription(threatTextSection, LO["Your threat on enemies in combat. Below the tank it is the tooltip's number, where 100% pulls aggro: yellow while safe, orange from 80%. While you tank it is red and shows your lead over the next player or pet, so 135% means 35% ahead. Only shown on plates DragonUI can match to a unit: your target, focus, mouseover and your group's targets."])
+    local threatRow = C:AddRow(threatTextSection)
+    C:AddToggle(threatRow, {
+        label = LO["Show Threat Percentage"],
+        dbPath = DB .. ".showThreatText",
+        width = 200,
+        callback = RefreshDependents,
+    })
+    Depends(C:AddDropdown(threatRow, {
+        label = LO["Position"],
+        desc = LO["Choosing the health text's spot swaps the two. Inside the bar it uses the health text's font size."],
+        dbPath = DB .. ".threatTextPosition",
+        getFunc = function()
+            return IsNameInsideBar() and "afterName" or (GetNP().threatTextPosition or "barRight")
+        end,
+        values = {
+            afterName = LO["After the Name"],
+            barLeft = LO["Inside the Bar, Left"],
+            barCenter = LO["Inside the Bar, Centered"],
+            barRight = LO["Inside the Bar, Right"],
+        },
+        width = 260,
+        disabled = IsThreatTextPositionLocked,
+        setFunc = SetThreatPosition,
+    }), IsThreatTextPositionLocked)
 
     local barSection = C:AddSection(scroll, LO["Health Bar"])
 
@@ -1151,6 +1230,34 @@ local function BuildTargetSubTab(scroll)
         label = LO["Show Target Arrows"],
         desc = LO["Left/right arrows on the targeted nameplate."],
         dbPath = DB .. ".showTargetArrows",
+        callback = RefreshNameplates,
+    })
+
+    local function IsTargetMarkerOff()
+        return not C:GetDBValue(DB .. ".showTargetMarker")
+    end
+    C:AddToggle(targetThreat, {
+        label = LO["Show Target Marker"],
+        desc = LO["A chevron above your target's name: green for friendly, yellow for neutral, red for hostile. Also shows on name-only plates."],
+        dbPath = DB .. ".showTargetMarker",
+        callback = RefreshAndRebuildNameplates,
+    })
+    local markerRow = C:AddRow(targetThreat)
+    C:AddSlider(markerRow, {
+        label = LO["Marker Size"],
+        dbPath = DB .. ".targetMarkerSize",
+        min = 12, max = 48, step = 2,
+        width = 200,
+        disabled = IsTargetMarkerOff,
+        callback = RefreshNameplates,
+    })
+    C:AddSlider(markerRow, {
+        label = LO["Marker Height"],
+        desc = LO["Height above the name. On enemies with debuffs shown, it is measured from above the debuff row."],
+        dbPath = DB .. ".targetMarkerOffsetY",
+        min = -10, max = 40, step = 1,
+        width = 200,
+        disabled = IsTargetMarkerOff,
         callback = RefreshNameplates,
     })
 

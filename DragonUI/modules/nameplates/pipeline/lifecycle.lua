@@ -24,6 +24,7 @@ function NP.lifecycle.InvalidatePlateVisuals(plateData, clearGuid)
         -- latched alpha 0 until a full refresh reached that plate, and those are budgeted --
         -- so after a nameplate toggle a random subset stayed invisible.
         NP.widgets.Hide("ThreatGlow", plateData)
+        NP.widgets.Hide("ThreatText", plateData)
         NP.widgets.Hide("TargetHighlight", plateData)
         NP.widgets.Hide("Combo", plateData)
         NP.widgets.Hide("Elite", plateData)

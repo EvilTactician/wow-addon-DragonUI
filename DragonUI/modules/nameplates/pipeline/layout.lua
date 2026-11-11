@@ -478,6 +478,8 @@ function NP.layout.HideMinaStack(plateData)
         plateData._totemIcon,
         plateData.minaPartyCast,
         plateData.minaThreatTex,
+        plateData.minaThreatText,
+        plateData.minaTargetMarker,
     }
     for i = 1, #hideTargets do
         local obj = hideTargets[i]
@@ -882,6 +884,14 @@ function NP.layout.ApplyNameplateFonts(plateData)
     applyFont(plateData.minaSubTitle, math.max(8, nameSize - 2))
     applyFont(plateData.minaHpNum, snap(plateData.minaHpNum, hpNumSize), textFlags)
     applyFont(plateData.minaHpBarPct, snap(plateData.minaHpBarPct, hpNumSize), textFlags)
+    if plateData.minaThreatText then
+        -- Sized like the health text in the same spot; on the bar it is outlined, since its
+        -- red/orange/yellow would otherwise vanish into a hostile red fill.
+        local inBar = (NP.module._threatTextPlacement or NP.config.GetThreatTextPlacement()) ~= "afterName"
+        local fs = plateData.minaThreatText
+        applyFont(fs, snap(fs, inBar and hpNumSize or nameSize), inBar and "OUTLINE" or textFlags)
+        fs:SetHeight(math.max(10, nameSize + 1))
+    end
     applyFont(plateData.minaPoCur, powerSize)
     applyFont(plateData.minaPoPct, powerSize)
     local cast = plateData.minaCast
@@ -1090,6 +1100,15 @@ function NP.layout.EnsureMinaStack(plateData)
     plateData.minaHpNum:SetParent(plateData.minaHpTextRow)
     plateData.minaHpBarPct:SetParent(plateData.minaHpTextRow)
 
+    -- Threat %; LayoutMinaStack moves it between the name row and the bar like the health text.
+    plateData.minaThreatText = plateData.minaHpTextRow:CreateFontString(nil, "OVERLAY")
+    SafeSetFont(plateData.minaThreatText, fontPath, 9, "")
+    plateData.minaThreatText:SetShadowOffset(1, -1)
+    plateData.minaThreatText:SetShadowColor(0, 0, 0, 1)
+    plateData.minaThreatText:SetNonSpaceWrap(false)
+    plateData.minaThreatText:SetWordWrap(false)
+    plateData.minaThreatText:Hide()
+
     plateData.minaPoCur = visualRoot:CreateFontString(nil, "OVERLAY")
     SafeSetFont(plateData.minaPoCur, fontPath, 9, "")
     plateData.minaPoCur:SetShadowOffset(1, -1)
@@ -1126,18 +1145,29 @@ function NP.layout.IsHealthTextBesideName(plateData)
     return fmt ~= "none" and placement == "afterName" and not NP.gather.IsHeadlineActive(plateData)
 end
 
+function NP.layout.IsThreatTextBesideName(plateData)
+    local enabled = NP.module._threatTextEnabled
+    if enabled == nil then enabled = NP.config.GetCfg().showThreatText == true end
+    local placement = NP.module._threatTextPlacement or NP.config.GetThreatTextPlacement()
+    return enabled and placement == "afterName" and not NP.gather.IsHeadlineActive(plateData)
+end
+
 -- The name ends where the health text begins, so no mix of options can make them overlap.
 function NP.layout.AnchorPlateName(plateData, centered, leftInset)
     local name, row = plateData.minaName, plateData.minaNameRow
     if not name or not row then return end
     local besideText = plateData.minaHpPct and NP.layout.IsHealthTextBesideName(plateData)
-    local key = (centered and "c" or "l") .. leftInset .. (besideText and "t" or "")
+    -- Threat text after the name sits left of any health text there, so the name ends at it.
+    local besideThreat = plateData.minaThreatText and NP.layout.IsThreatTextBesideName(plateData)
+    local key = (centered and "c" or "l") .. leftInset .. (besideText and "t" or "") .. (besideThreat and "h" or "")
     if plateData._nameAnchorKey == key then return end
     plateData._nameAnchorKey = key
     name:ClearAllPoints()
     name:SetJustifyH(centered and "CENTER" or "LEFT")
     name:SetPoint("LEFT", row, "LEFT", leftInset, 0)
-    if besideText then
+    if besideThreat then
+        name:SetPoint("RIGHT", plateData.minaThreatText, "LEFT", -C.NAME_TEXT_GAP, 0)
+    elseif besideText then
         name:SetPoint("RIGHT", plateData.minaHpPct, "LEFT", -C.NAME_TEXT_GAP, 0)
     else
         name:SetPoint("RIGHT", row, "RIGHT", 0, 0)
@@ -1267,6 +1297,35 @@ function NP.layout.LayoutMinaStack(plateData)
     if plateData.minaHpBarPct then
         plateData.minaHpBarPct:ClearAllPoints()
         plateData.minaHpBarPct:SetPoint("RIGHT", hp, "RIGHT", -inset, 0)
+    end
+    if plateData.minaThreatText then
+        local text = plateData.minaThreatText
+        local threatPlacement = NP.config.GetThreatTextPlacement()
+        text:ClearAllPoints()
+        if threatPlacement == "afterName" and plateData.minaNameRow then
+            -- Unsized, like the health text, so the name truncates against its real width.
+            text:SetParent(plateData.minaNameRow)
+            text:SetJustifyH("RIGHT")
+            if NP.layout.IsHealthTextBesideName(plateData) and plateData.minaHpPct then
+                text:SetPoint("RIGHT", plateData.minaHpPct, "LEFT", -C.NAME_TEXT_GAP * 2, 0)
+            else
+                text:SetPoint("RIGHT", plateData.minaNameRow, "RIGHT", 0, 0)
+            end
+        else
+            text:SetParent(plateData.minaHpTextRow or visualRoot)
+            if threatPlacement == "barCenter" then
+                text:SetJustifyH("CENTER")
+                text:SetPoint("CENTER", hp, "CENTER", 0, 0)
+            elseif threatPlacement == "barLeft" then
+                text:SetJustifyH("LEFT")
+                text:SetPoint("LEFT", hp, "LEFT", inset, 0)
+            else
+                text:SetJustifyH("RIGHT")
+                text:SetPoint("RIGHT", hp, "RIGHT", -inset, 0)
+            end
+        end
+        -- The parent may have changed; SyncThreatText must rewrite the text and colour.
+        plateData._threatTextShown = nil
     end
     -- The placement may have moved the text to another FontString; SyncHealth must rewrite it.
     plateData._hpTextCur, plateData._hpTextMax = nil, nil

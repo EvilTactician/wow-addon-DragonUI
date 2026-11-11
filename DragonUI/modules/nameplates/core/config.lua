@@ -174,6 +174,31 @@ function NP.config.GetHealthTextPlacement()
     return HEALTH_TEXT_PLACEMENTS[placement] and placement or "afterName"
 end
 
+local THREAT_TEXT_PLACEMENTS = { afterName = true, barLeft = true, barCenter = true, barRight = true }
+
+-- The spots the health text fills; Split puts the value left and the percent right.
+function NP.config.HealthTextOccupies(spot, fmt, placement)
+    if fmt == "none" then return false end
+    if placement == "barSplit" then
+        return (spot == "barLeft" and fmt ~= "percent") or (spot == "barRight" and fmt ~= "value")
+    end
+    return spot == placement
+end
+
+-- The Options panel swaps the two texts, so a clash here only comes from the health side changing
+-- under it; the threat text then sits after the name, left of any health text already there.
+function NP.config.GetThreatTextPlacement()
+    if NP.config.IsNameOverlayBar() then
+        return "afterName"
+    end
+    local placement = NP.config.GetCfg().threatTextPosition
+    placement = THREAT_TEXT_PLACEMENTS[placement] and placement or "barRight"
+    if NP.config.HealthTextOccupies(placement, NP.config.GetHealthTextFormat(), NP.config.GetHealthTextPlacement()) then
+        return "afterName"
+    end
+    return placement
+end
+
 function NP.config.IsPowerShown(plateData)
     local cfg = NP.config.GetCfg()
     if cfg.showPowerBar == false then return false end
