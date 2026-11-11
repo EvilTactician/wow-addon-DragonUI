@@ -322,7 +322,24 @@ local function setTomTomWaypoint(block)
         addon:Print(string.format(L["No map location for '%s' to set a TomTom waypoint."], title or ""))
         return
     end
-    TomTom:AddZWaypoint(c, z, x * 100, y * 100, title)
+    return TomTom:AddZWaypoint(c, z, x * 100, y * 100, title)
+end
+
+-- The channels TomTom's own "Send waypoint to" offers, as far as the player can use them now.
+local function tomTomShareMenu(block)
+    local entries = {}
+    local function add(label, channel)
+        entries[#entries + 1] = { text = label, func = function()
+            -- TomTom sends one of its own waypoints, so the quest's is set here first.
+            local uid = setTomTomWaypoint(block)
+            if uid then TomTom:SendWaypoint(uid, channel) end
+        end }
+    end
+    if GetNumPartyMembers() > 0 then add(PARTY, "PARTY") end
+    if GetNumRaidMembers() > 0 then add(RAID, "RAID") end
+    if select(2, IsInInstance()) == "pvp" then add(BATTLEGROUND, "BATTLEGROUND") end
+    if IsInGuild() then add(GUILD, "GUILD") end
+    return entries
 end
 
 -- Same entries WatchFrameDropDown_Initialize builds, in the same order.
@@ -349,6 +366,11 @@ local function blockMenu(block)
             entries[#entries + 1] = { text = L["Set TomTom waypoint"], func = function()
                 setTomTomWaypoint(block)
             end }
+            if TomTom.SendWaypoint and #tomTomShareMenu(block) > 0 then
+                entries[#entries + 1] = { text = L["Share TomTom waypoint"], menu = function()
+                    return tomTomShareMenu(block)
+                end }
+            end
         end
     elseif block.kind == "achievement" then
         entries[#entries + 1] = { text = OBJECTIVES_STOP_TRACKING, func = function()
