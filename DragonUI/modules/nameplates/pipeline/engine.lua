@@ -340,6 +340,7 @@ function E.SyncConfigSnapshot(skipStackingCVar)
     NP.module._healthTextPlacement = NP.config.GetHealthTextPlacement()
     NP.module._threatTextPlacement = NP.config.GetThreatTextPlacement()
     NP.module._threatTextEnabled = cfg.showThreatText == true
+    E.SyncFriendlyTargetPlates()
     NP.module._plateAlphaCompat = cfg.nameplateAlphaCompat == true
     NP.module._barAlphaCompat = cfg.nameplateBarAlphaCompat == true
     NP.module._clampTargetEnabled = cfg.clampTarget == true
@@ -503,8 +504,9 @@ local function EngineOnUpdate(_, elapsed)
 
     -- 7. Visual alpha on shown plates only; hidden re-apply on first tick after show.
     local onlyTarget = NP.module._onlyTargetPlates
+    local friendlyTargetOnly = NP.module._friendlyPlatesManaged
     local canResize = not InCombatLockdown()
-    if NP.module._opacityEnabled or onlyTarget then
+    if NP.module._opacityEnabled or onlyTarget or friendlyTargetOnly then
         local opacityEnabled = NP.module._opacityEnabled
         local fullParty = NP.module._opacityFullParty
         for _, pd in pairs(NP.module.plates) do
@@ -513,6 +515,9 @@ local function EngineOnUpdate(_, elapsed)
                 local isTarget = NP.identity.IsTargetPlateVisual(pd, hasTarget)
                 SyncTargetVisual(pd, isTarget)
                 local hidden = onlyTarget and not NP.gather.IsOnlyTargetPlateAllowed(pd, isTarget) or false
+                if friendlyTargetOnly and not hidden and not isTarget then
+                    hidden = NP.native_style.GetPlateReaction(pd) == "FRIENDLY"
+                end
                 pd._onlyTargetHidden = hidden or nil
                 if canResize then
                     NP.layout.SetPlateShrunk(pd, hidden)
@@ -575,6 +580,49 @@ local function FindPlateDataByNameplateFrame(frame)
     return nil
 end
 
+-- Friendly target marker. The client makes plates for every friendly unit or none, so friendly
+-- plates are switched on only while a friendly unit is targeted, and every other friendly plate
+-- is hidden (step 7). A user who keeps friendly plates on is left alone. The flag is saved, so a
+-- crash or logout while it is on still switches the plates back off on the next login.
+local function FriendlyPlatesManaged()
+    local global = addon.db and addon.db.global
+    return global and global.friendlyPlatesManaged == true
+end
+
+local function SetFriendlyPlatesManaged(managed)
+    local global = addon.db and addon.db.global
+    if global then global.friendlyPlatesManaged = managed or nil end
+    NP.module._friendlyPlatesManaged = managed or nil
+end
+
+local function WantsFriendlyTargetPlate()
+    local cfg = NP.config.GetCfg()
+    return NP.config.IsModuleEnabled() and cfg.showTargetMarker == true and cfg.targetMarkerFriendly == true
+        and UnitExists("target") and not UnitIsUnit("target", "player")
+        and UnitIsFriend("player", "target") and true or false
+end
+
+function E.SyncFriendlyTargetPlates(release)
+    local on = GetCVar("nameplateShowFriends") == "1"
+    local managed = FriendlyPlatesManaged()
+    if managed and not on then
+        -- Turned off by hand (Shift+V): it is the user's again.
+        SetFriendlyPlatesManaged(false)
+        managed = false
+    end
+    if not release and WantsFriendlyTargetPlate() then
+        if not on then
+            SetFriendlyPlatesManaged(true)
+            SetCVar("nameplateShowFriends", "1")
+        else
+            NP.module._friendlyPlatesManaged = managed or nil
+        end
+    elseif managed then
+        SetFriendlyPlatesManaged(false)
+        SetCVar("nameplateShowFriends", "0")
+    end
+end
+
 local function EngineOnEvent(_, event, unit, ...)
     if not NP.module.applied or not NP.config.IsModuleEnabled() then return end
 
@@ -583,6 +631,7 @@ local function EngineOnEvent(_, event, unit, ...)
         NP.module.targetGUID = UnitGUID("target")
         NP.module._deferredTargetResolveFrames = 1
         NP.unitcache.LearnUnit("target")
+        E.SyncFriendlyTargetPlates()
         return
     end
     if event == "PLAYER_FOCUS_CHANGED" then
@@ -1010,6 +1059,7 @@ local function RunNameplatesRestore()
     if NP.module.showVKeyCVarManaged and NP.module.savedShowVKeyCastbar ~= nil and SetCVar then
         SetCVar("showVKeyCastbar", NP.module.savedShowVKeyCastbar)
     end
+    E.SyncFriendlyTargetPlates(true)
     if NP.module.savedNameplateAllowOverlap ~= nil and SetCVar then
         SetCVar("nameplateAllowOverlap", NP.module.savedNameplateAllowOverlap)
     end
@@ -1190,3 +1240,10 @@ end)
 if addon.core and addon.core.RegisterMessage then
     addon.core.RegisterMessage(NP, "DRAGONUI_READY", BootstrapNameplates)
 end
+
+-- Logging out with a friendly target leaves the plates on; switch them back before the client saves.
+local logoutFrame = CreateFrame("Frame")
+logoutFrame:RegisterEvent("PLAYER_LOGOUT")
+logoutFrame:SetScript("OnEvent", function()
+    E.SyncFriendlyTargetPlates(true)
+end)
