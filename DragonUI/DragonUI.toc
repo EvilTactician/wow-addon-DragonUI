@@ -1,8 +1,8 @@
 ## Interface: 30300
 ## Title: |cff1784d1DragonUI|r
 ## Notes: |cffcaf7faRetail-inspired modular UI addon for WoW 3.3.5a (WotLK).|r
-## Version: 2.37.2
-## Author: NeticSoul
+## Version: 3.1.0
+## Author: NeticSoul, EvilTactician
 ## SavedVariables: DragonUIDB
 ## OptionalDeps: Blizzard_TimeManager, Bartender4, ShadowedUnitFrames
 ## X-License: MIT for project-authored code; Blizzard art, fonts and bundled libraries keep their own terms (see THIRD_PARTY_NOTICES)

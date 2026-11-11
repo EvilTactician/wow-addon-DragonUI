@@ -367,11 +367,13 @@ local function BuildGeneralTab(scroll)
     -- ====================================================================
     local about = C:AddSection(scroll, LO["About"])
 
-    C:AddLabel(about, "|cff" .. C.Theme.accentHex .. LO["DragonUI"] .. " v2.5|r")
+    -- The version comes from the .toc, like the panel header, so the two cannot drift apart.
+    C:AddLabel(about, "|cff" .. C.Theme.accentHex .. LO["DragonUI"] .. " v" .. (addon.RELEASE_VERSION or "?") .. "|r")
     C:AddDescription(about, LO["Bringing the retail WoW look to 3.3.5a, inspired by Dragonflight UI."])
-    C:AddDescription(about, LO["Created and maintained by NeticSoul, with community contributions."])
-    C:AddDescription(about, LO["GitHub (select and Ctrl+C to copy):"])
+    C:AddDescription(about, LO["Created by NeticSoul, with community contributions. Original project (select and Ctrl+C to copy):"])
     C:AddCopyableText(about, "https://github.com/NeticSoul/DragonUI")
+    C:AddDescription(about, LO["This fork is maintained by EvilTactician (select and Ctrl+C to copy):"])
+    C:AddCopyableText(about, "https://github.com/EvilTactician/wow-addon-DragonUI")
 
     C:AddSpacer(scroll)
 
