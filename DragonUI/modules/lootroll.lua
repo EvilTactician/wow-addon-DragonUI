@@ -476,7 +476,7 @@ local function MakePassBig(frame, pass)
     StyleArt(pass:GetPushedTexture(), 1, -1)
     pass:GetPushedTexture():SetVertexColor(0.75, 0.75, 0.75)
     StyleArt(pass:GetHighlightTexture(), 0, 0)
-    pass:GetHighlightTexture():SetAlpha(0.6)
+    pass:GetHighlightTexture():SetAlpha(0.5)
 end
 
 local function RestorePass(pass)
