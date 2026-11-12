@@ -402,13 +402,14 @@ addon.package:Subscribe(AutoRollOnLoot, "START_LOOT_ROLL")
 
 -- =============================================================================
 -- BIG PASS BUTTON
--- Blizzard's Pass is the small close cross in the corner. This turns it into a red cross the
--- size of Need, Greed and Disenchant, beside Need in the gap the rest of the row leaves.
+-- Blizzard's Pass is the small close cross in the corner. This turns it into a red cross (our own
+-- art, drawn to match the dice and coin) the size of Need, Greed and Disenchant, beside Need in the gap the rest of the row leaves.
 -- Only its look and place change: the button and its click (pass) stay Blizzard's.
 -- =============================================================================
 
-local PASS_ART = "Interface\\RaidFrame\\ReadyCheck-NotReady"
-local PASS_INSET = -1 -- the cross art has empty margins; a little bleed matches the dice
+local PASS_ART = "Interface\\AddOns\\DragonUI\\Textures\\LootRoll\\LootRoll-Pass-Up"
+local PASS_HIGHLIGHT = "Interface\\AddOns\\DragonUI\\Textures\\LootRoll\\LootRoll-Pass-Highlight"
+local PASS_INSET = 0
 local passOriginals = {}
 
 local function StyleArt(texture, offsetX, offsetY)
@@ -470,12 +471,12 @@ local function MakePassBig(frame, pass)
 
     pass:SetNormalTexture(PASS_ART)
     pass:SetPushedTexture(PASS_ART)
-    pass:SetHighlightTexture(PASS_ART, "ADD")
+    pass:SetHighlightTexture(PASS_HIGHLIGHT, "ADD")
     StyleArt(pass:GetNormalTexture(), 0, 0)
     StyleArt(pass:GetPushedTexture(), 1, -1)
     pass:GetPushedTexture():SetVertexColor(0.75, 0.75, 0.75)
     StyleArt(pass:GetHighlightTexture(), 0, 0)
-    pass:GetHighlightTexture():SetAlpha(0.4)
+    pass:GetHighlightTexture():SetAlpha(0.6)
 end
 
 local function RestorePass(pass)
