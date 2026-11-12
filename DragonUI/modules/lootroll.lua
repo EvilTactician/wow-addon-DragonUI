@@ -408,7 +408,7 @@ addon.package:Subscribe(AutoRollOnLoot, "START_LOOT_ROLL")
 -- =============================================================================
 
 local PASS_ART = "Interface\\RaidFrame\\ReadyCheck-NotReady"
-local PASS_INSET = 3
+local PASS_INSET = -1 -- the cross art has empty margins; a little bleed matches the dice
 local passOriginals = {}
 
 local function StyleArt(texture, offsetX, offsetY)
@@ -417,10 +417,31 @@ local function StyleArt(texture, offsetX, offsetY)
     texture:SetPoint("BOTTOMRIGHT", -PASS_INSET + offsetX, PASS_INSET + offsetY)
 end
 
+-- The frame art behind the old close cross; left on its own it is an empty box in the corner.
+local function SetCornerShown(frame, shown)
+    for _, region in ipairs({ frame:GetRegions() }) do
+        local texture = region.GetTexture and region:GetTexture()
+        local name = region:GetName()
+        if (type(texture) == "string" and texture:lower():find("corner"))
+            or (name and name:find("Corner$")) then
+            if shown then region:Show() else region:Hide() end
+        end
+    end
+end
+
+local function PlacePass(frame, pass)
+    local name = frame:GetName()
+    local need, greed, de = _G[name .. "RollButton"], _G[name .. "GreedButton"], _G[name .. "DisenchantButton"]
+    local dx = need:GetWidth() + 5
+    local deX, greedX = de and de:GetCenter(), greed:GetCenter()
+    if deX and greedX then dx = deX - greedX end
+    pass:ClearAllPoints()
+    pass:SetPoint("CENTER", need, "CENTER", dx, 0)
+end
+
 local function MakePassBig(frame, pass)
     local need = _G[frame:GetName() .. "RollButton"]
     local greed = _G[frame:GetName() .. "GreedButton"]
-    local de = _G[frame:GetName() .. "DisenchantButton"]
     if not (need and greed) then return end
 
     if not passOriginals[pass] then
@@ -433,15 +454,17 @@ local function MakePassBig(frame, pass)
         passOriginals[pass] = saved
     end
 
-    -- Beside Need the way Disenchant sits beside Greed, so the four make a square.
-    local point, relativeTo, relativePoint, x, y
-    if de then point, relativeTo, relativePoint, x, y = de:GetPoint(1) end
-    pass:ClearAllPoints()
-    if relativeTo == greed then
-        pass:SetPoint(point, need, relativePoint, x, y)
-    else
-        pass:SetPoint("LEFT", need, "RIGHT", 5, 0)
+    -- Level with Need, in Disenchant's column, so the four make a square. Measured each time the
+    -- window shows, as positions are only known once it is on screen.
+    PlacePass(frame, pass)
+    if not passOriginals[pass].hooked then
+        passOriginals[pass].hooked = true
+        frame:HookScript("OnShow", function(self)
+            if passOriginals[pass].big then PlacePass(self, pass) end
+        end)
     end
+    passOriginals[pass].big = true
+    SetCornerShown(frame, false)
     pass:SetWidth(need:GetWidth())
     pass:SetHeight(need:GetHeight())
 
@@ -458,6 +481,8 @@ end
 local function RestorePass(pass)
     local saved = passOriginals[pass]
     if not saved then return end
+    saved.big = false
+    SetCornerShown(pass:GetParent(), true)
     pass:ClearAllPoints()
     for _, p in ipairs(saved.points) do pass:SetPoint(unpack(p)) end
     pass:SetWidth(saved.width)
