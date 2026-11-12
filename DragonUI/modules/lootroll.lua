@@ -436,8 +436,9 @@ local function PlacePass(frame, pass)
     local dx = need:GetWidth() + 5
     local deX, greedX = de and de:GetCenter(), greed:GetCenter()
     if deX and greedX then dx = deX - greedX end
+    -- Nudged to match where the dice and Disenchant art sit inside their buttons.
     pass:ClearAllPoints()
-    pass:SetPoint("CENTER", need, "CENTER", dx, 0)
+    pass:SetPoint("CENTER", need, "CENTER", dx - 2, 2)
 end
 
 local function MakePassBig(frame, pass)
