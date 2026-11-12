@@ -308,6 +308,7 @@ local defaults = {
             y = 220,
             autoRoll = false, -- Auto greed/disenchant green BoE rolls at max level
             voteTracker = true, -- List who chose what beside the roll windows
+            bigPass = true, -- Pass as a red cross the size of the other roll buttons
         },
         -- Party Invites
         autoaccept = {

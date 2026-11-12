@@ -399,3 +399,94 @@ local function AutoRollOnLoot(_, _, rollID)
 end
 
 addon.package:Subscribe(AutoRollOnLoot, "START_LOOT_ROLL")
+
+-- =============================================================================
+-- BIG PASS BUTTON
+-- Blizzard's Pass is the small close cross in the corner. This turns it into a red cross the
+-- size of Need, Greed and Disenchant, beside Need in the gap the rest of the row leaves.
+-- Only its look and place change: the button and its click (pass) stay Blizzard's.
+-- =============================================================================
+
+local PASS_ART = "Interface\\RaidFrame\\ReadyCheck-NotReady"
+local PASS_INSET = 3
+local passOriginals = {}
+
+local function StyleArt(texture, offsetX, offsetY)
+    texture:ClearAllPoints()
+    texture:SetPoint("TOPLEFT", PASS_INSET + offsetX, -PASS_INSET + offsetY)
+    texture:SetPoint("BOTTOMRIGHT", -PASS_INSET + offsetX, PASS_INSET + offsetY)
+end
+
+local function MakePassBig(frame, pass)
+    local need = _G[frame:GetName() .. "RollButton"]
+    local greed = _G[frame:GetName() .. "GreedButton"]
+    local de = _G[frame:GetName() .. "DisenchantButton"]
+    if not (need and greed) then return end
+
+    if not passOriginals[pass] then
+        local saved = { width = pass:GetWidth(), height = pass:GetHeight(), points = {} }
+        for i = 1, pass:GetNumPoints() do saved.points[i] = { pass:GetPoint(i) } end
+        local normal, pushed, highlight = pass:GetNormalTexture(), pass:GetPushedTexture(), pass:GetHighlightTexture()
+        saved.normal = normal and normal:GetTexture()
+        saved.pushed = pushed and pushed:GetTexture()
+        saved.highlight = highlight and highlight:GetTexture()
+        passOriginals[pass] = saved
+    end
+
+    -- Beside Need the way Disenchant sits beside Greed, so the four make a square.
+    local point, relativeTo, relativePoint, x, y
+    if de then point, relativeTo, relativePoint, x, y = de:GetPoint(1) end
+    pass:ClearAllPoints()
+    if relativeTo == greed then
+        pass:SetPoint(point, need, relativePoint, x, y)
+    else
+        pass:SetPoint("LEFT", need, "RIGHT", 5, 0)
+    end
+    pass:SetWidth(need:GetWidth())
+    pass:SetHeight(need:GetHeight())
+
+    pass:SetNormalTexture(PASS_ART)
+    pass:SetPushedTexture(PASS_ART)
+    pass:SetHighlightTexture(PASS_ART, "ADD")
+    StyleArt(pass:GetNormalTexture(), 0, 0)
+    StyleArt(pass:GetPushedTexture(), 1, -1)
+    pass:GetPushedTexture():SetVertexColor(0.75, 0.75, 0.75)
+    StyleArt(pass:GetHighlightTexture(), 0, 0)
+    pass:GetHighlightTexture():SetAlpha(0.4)
+end
+
+local function RestorePass(pass)
+    local saved = passOriginals[pass]
+    if not saved then return end
+    pass:ClearAllPoints()
+    for _, p in ipairs(saved.points) do pass:SetPoint(unpack(p)) end
+    pass:SetWidth(saved.width)
+    pass:SetHeight(saved.height)
+    pass:SetNormalTexture(saved.normal)
+    pass:SetPushedTexture(saved.pushed)
+    pass:SetHighlightTexture(saved.highlight, "ADD")
+    for _, texture in ipairs({ pass:GetNormalTexture(), pass:GetPushedTexture(), pass:GetHighlightTexture() }) do
+        if texture then
+            texture:ClearAllPoints()
+            texture:SetAllPoints(pass)
+            texture:SetVertexColor(1, 1, 1)
+            texture:SetAlpha(1)
+        end
+    end
+end
+
+function addon.RefreshLootRollPassButton()
+    local cfg = addon.db and addon.db.profile and addon.db.profile.lootroll
+    local big = not cfg or cfg.bigPass ~= false
+    for i = 1, NUM_GROUP_LOOT_FRAMES or 4 do
+        local frame = _G["GroupLootFrame" .. i]
+        local pass = frame and _G[frame:GetName() .. "PassButton"]
+        if pass then
+            if big then MakePassBig(frame, pass) else RestorePass(pass) end
+        end
+    end
+end
+
+addon.package:Subscribe(function()
+    addon.RefreshLootRollPassButton()
+end, "PLAYER_LOGIN")
