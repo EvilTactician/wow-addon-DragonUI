@@ -261,14 +261,16 @@ local function ReadRoster()
 end
 
 local function ColoredName(name)
-    local me = UnitName("player")
+    -- You in gold rather than your class colour, so your own choice stands out.
+    if name == UnitName("player") then
+        return "|cffffd100" .. (L["You"] or "You") .. "|r"
+    end
     local class = roster[name]
     local color = type(class) == "string" and RAID_CLASS_COLORS and RAID_CLASS_COLORS[class]
-    local label = name == me and (L["You"] or "You") or name
     if color then
-        return string.format("|cff%02x%02x%02x%s|r", color.r * 255, color.g * 255, color.b * 255, label)
+        return string.format("|cff%02x%02x%02x%s|r", color.r * 255, color.g * 255, color.b * 255, name)
     end
-    return label
+    return name
 end
 
 -- =============================================================================
