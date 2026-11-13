@@ -31,6 +31,7 @@ function NP.lifecycle.InvalidatePlateVisuals(plateData, clearGuid)
         NP.widgets.Hide("Totem", plateData)
         NP.widgets.Hide("Quest", plateData)
     end
+    NP.targetheals.Release(plateData)
     if NP.retail_chrome then
         NP.retail_chrome.ResetThreatAlert(plateData)
     end

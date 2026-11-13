@@ -595,6 +595,9 @@ function NP.gather.SyncHealth(plateData, value)
     if plateData._retailChromeHeadline then
         NP.widgets.Sync("RetailChrome", plateData)
     end
+    if NP.targetheals.IsCurrent(plateData) then
+        NP.targetheals.Paint(plateData)
+    end
 
     local rowText, barText, barPct = plateData.minaHpPct, plateData.minaHpNum, plateData.minaHpBarPct
     if not rowText or not barText or not barPct then return end
@@ -1014,6 +1017,7 @@ function NP.gather.SyncTargetHighlight(plateData, isTargeted)
         isTargeted = NP.identity.IsTargetPlateVisual(plateData)
     end
     SyncTargetMarker(plateData, isTargeted, cfg)
+    NP.targetheals.SyncTarget(plateData, isTargeted)
 
     -- Headline mode shows only the name: no target glow or arrows.
     if NP.gather.IsHeadlineActive(plateData) then

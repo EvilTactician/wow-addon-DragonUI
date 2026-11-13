@@ -1437,6 +1437,14 @@ L["Friendly units only have a nameplate while the game's friendly nameplates are
 L["Marker Size"] = true
 L["Marker Height"] = true
 L["Height above the name. On enemies with debuffs shown, it is measured from above the debuff row."] = true
+L["Nameplate on Friendly Targets"] = true
+L["Heal Prediction & Absorbs on Target"] = true
+L["Incoming heals and absorb shields on your target's nameplate, friendly or hostile. Friendly targets need Nameplate on Friendly Targets, unless you keep friendly nameplates on. Heals only show from players running a heal-sharing addon (DragonUI is one), not from NPCs or playerbots; shields show from anyone."] = true
+L["Missing Health on Friendly Target"] = true
+L["The health your friendly target is missing, in red beside its nameplate's health bar."] = true
+L["Marker on Current Target"] = true
+L["A chevron above your target's name: green for friendly, yellow for neutral, red for hostile. Also shows on name-only plates. Friendly targets need Nameplate on Friendly Targets, unless you keep friendly nameplates on."] = true
+L["Your threat on enemies in combat, as a percentage. Its position is set under Name & Health, Threat Text."] = true
 L["Opacity"] = true
 L["Disable Non-Target Fade"] = true
 L["Only Show on Target & Focus"] = true

@@ -341,6 +341,7 @@ function E.SyncConfigSnapshot(skipStackingCVar)
     NP.module._threatTextPlacement = NP.config.GetThreatTextPlacement()
     NP.module._threatTextEnabled = cfg.showThreatText == true
     E.SyncFriendlyTargetPlates()
+    NP.targetheals.Refresh(cfg)
     NP.module._plateAlphaCompat = cfg.nameplateAlphaCompat == true
     NP.module._barAlphaCompat = cfg.nameplateBarAlphaCompat == true
     NP.module._clampTargetEnabled = cfg.clampTarget == true
@@ -580,7 +581,7 @@ local function FindPlateDataByNameplateFrame(frame)
     return nil
 end
 
--- Friendly target marker. The client makes plates for every friendly unit or none, so friendly
+-- Nameplate on friendly targets. The client makes plates for every friendly unit or none, so friendly
 -- plates are switched on only while a friendly unit is targeted, and every other friendly plate
 -- is hidden (step 7). A user who keeps friendly plates on is left alone. The flag is saved, so a
 -- crash or logout while it is on still switches the plates back off on the next login.
@@ -597,7 +598,7 @@ end
 
 local function WantsFriendlyTargetPlate()
     local cfg = NP.config.GetCfg()
-    return NP.config.IsModuleEnabled() and cfg.showTargetMarker == true and cfg.targetMarkerFriendly == true
+    return NP.config.IsModuleEnabled() and cfg.friendlyTargetPlate == true
         and UnitExists("target") and not UnitIsUnit("target", "player")
         and UnitIsFriend("player", "target") and true or false
 end
