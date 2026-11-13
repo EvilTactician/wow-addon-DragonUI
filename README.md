@@ -4,7 +4,7 @@
 
 ![Interface Version](https://img.shields.io/badge/Interface-30300-blue)
 ![WoW Version](https://img.shields.io/badge/WoW-3.3.5a-orange)
-[![Version](https://img.shields.io/badge/Version-3.1.1-green)](https://github.com/EvilTactician/wow-addon-DragonUI)
+[![Version](https://img.shields.io/badge/Version-3.2.0-green)](https://github.com/EvilTactician/wow-addon-DragonUI)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 
 **A modular, retail-inspired UI addon for World of Warcraft 3.3.5a (Wrath of the Lich King).**
@@ -44,13 +44,17 @@ It is developed and tested on an AzerothCore server with playerbots.
 - **Threat on nameplates**: an optional threat percentage on enemy nameplates. Below the
   tank it shows the tooltip's number (100% pulls aggro), yellow while safe and orange from
   80%; while you tank it turns red and shows your lead over the next player or pet.
+- **Your target's nameplate**: friendly targets can get a nameplate while targeted, with
+  every other friendly plate kept hidden. On any target, friendly or hostile, its plate
+  can show incoming heals and absorb shields, and a friendly target's missing health.
 - **Target marker**: an optional chevron above your target's name, green for friendly,
-  yellow for neutral and red for hostile, with size and height settings. It can also turn
-  on a friendly target's nameplate while it is targeted, keeping every other friendly
-  plate hidden.
+  yellow for neutral and red for hostile, with size and height settings.
 - **Party buffs and debuffs**: an optional line of debuffs, then buffs, under each party
   frame, with durations. Debuffs you can dispel come first; buffs can be limited to the
   ones you cast or can cast, and yours get a gold border.
+- **Loot rolls**: a tracker beside the roll windows lists who chose Need, Greed,
+  Disenchant or Pass on each roll, who is still choosing, and the winner. Pass is a
+  full-size button like the other three.
 - **Party pets beside their owners**: in the vertical layout, members' pets sit to the
   right of their frame instead of in the gap below it.
 - **Quest tracker**: quest titles coloured by difficulty, like the quest log and map.

@@ -1233,21 +1233,33 @@ local function BuildTargetSubTab(scroll)
         callback = RefreshNameplates,
     })
 
+    C:AddToggle(targetThreat, {
+        label = LO["Nameplate on Friendly Targets"],
+        desc = LO["Friendly units only have a nameplate while the game's friendly nameplates are on. This turns them on while you target a friendly unit and hides every friendly plate except your target. If you keep friendly nameplates on yourself, they are left as they are."],
+        dbPath = DB .. ".friendlyTargetPlate",
+        callback = RefreshNameplates,
+    })
+    C:AddToggle(targetThreat, {
+        label = LO["Heal Prediction & Absorbs on Target"],
+        desc = LO["Incoming heals and absorb shields on your target's nameplate, friendly or hostile. Friendly targets need Nameplate on Friendly Targets, unless you keep friendly nameplates on. Heals only show from players running a heal-sharing addon (DragonUI is one), not from NPCs or playerbots; shields show from anyone."],
+        dbPath = DB .. ".targetHealPrediction",
+        callback = RefreshNameplates,
+    })
+    C:AddToggle(targetThreat, {
+        label = LO["Missing Health on Friendly Target"],
+        desc = LO["The health your friendly target is missing, in red beside its nameplate's health bar."],
+        dbPath = DB .. ".targetMissingHealth",
+        callback = RefreshNameplates,
+    })
+
     local function IsTargetMarkerOff()
         return not C:GetDBValue(DB .. ".showTargetMarker")
     end
     C:AddToggle(targetThreat, {
-        label = LO["Show Target Marker"],
-        desc = LO["A chevron above your target's name: green for friendly, yellow for neutral, red for hostile. Also shows on name-only plates."],
+        label = LO["Marker on Current Target"],
+        desc = LO["A chevron above your target's name: green for friendly, yellow for neutral, red for hostile. Also shows on name-only plates. Friendly targets need Nameplate on Friendly Targets, unless you keep friendly nameplates on."],
         dbPath = DB .. ".showTargetMarker",
         callback = RefreshAndRebuildNameplates,
-    })
-    C:AddToggle(targetThreat, {
-        label = LO["Marker on Friendly Targets"],
-        desc = LO["Friendly units only have a nameplate while the game's friendly nameplates are on. This turns them on while you target a friendly unit and hides every friendly plate except your target. If you keep friendly nameplates on yourself, they are left as they are."],
-        dbPath = DB .. ".targetMarkerFriendly",
-        disabled = IsTargetMarkerOff,
-        callback = RefreshNameplates,
     })
     local markerRow = C:AddRow(targetThreat)
     C:AddSlider(markerRow, {
@@ -1315,6 +1327,14 @@ local function BuildTargetSubTab(scroll)
         LO["DPS Mode"],
         LO["In combat, colors by threat for DPS: green = no aggro, yellow = transition, red = you have aggro."]
     )
+
+    -- The same setting as in Name & Health, where its position is chosen.
+    C:AddToggle(targetThreat, {
+        label = LO["Show Threat Percentage"],
+        desc = LO["Your threat on enemies in combat, as a percentage. Its position is set under Name & Health, Threat Text."],
+        dbPath = DB .. ".showThreatText",
+        callback = RefreshNameplates,
+    })
 end
 
 local function BuildBarsSubTab(scroll)
