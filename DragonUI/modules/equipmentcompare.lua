@@ -101,7 +101,10 @@ local function WaitForCache(pair)
     end
 end
 
-local function ShowComparison(pair)
+local function ShowComparison(pair, fallbackLink)
+    if fallbackLink then
+        pair.fallbackLink = fallbackLink
+    end
     local frame = _G[pair.tooltip]
     if not frame or not frame:IsShown() or not IsModuleEnabled() then
         return
@@ -116,7 +119,9 @@ local function ShowComparison(pair)
         return
     end
 
+    -- Loot roll and quest log tooltips can leave GetItem empty; their own link is used then.
     local _, link = frame:GetItem()
+    link = link or pair.fallbackLink
     if not link then
         HideComparison(pair)
         return
@@ -163,7 +168,7 @@ retry:SetScript("OnUpdate", function(self, elapsed)
     local pending = self.pending
     self.pending = {}
     for pair in pairs(pending) do
-        ShowComparison(pair)
+        ShowComparison(pair, pair.fallbackLink)
     end
     if not next(self.pending) or self.tries >= RETRY_LIMIT then
         wipe(self.pending)
@@ -205,6 +210,13 @@ end)
 -- LIFECYCLE
 -- ============================================================================
 
+local LINK_SOURCES = {
+    SetLootRollItem = function(rollID) return GetLootRollItemLink(rollID) end,
+    SetLootItem = function(slot) return GetLootSlotLink(slot) end,
+    SetQuestLogItem = function(kind, slot) return GetQuestLogItemLink(kind, slot) end,
+    SetQuestItem = function(kind, slot) return GetQuestItemLink(kind, slot) end,
+}
+
 local function InstallHooks(pair)
     local frame = _G[pair.tooltip]
     if not frame or EquipmentCompareModule.hooks[frame] then
@@ -216,6 +228,7 @@ local function InstallHooks(pair)
         ShowComparison(pair)
     end)
     frame:HookScript("OnTooltipCleared", function()
+        pair.fallbackLink = nil
         if IsModuleEnabled() then
             HideOwnComparison(pair)
         end
@@ -226,6 +239,17 @@ local function InstallHooks(pair)
             HideComparison(pair)
         end
     end)
+    -- These fill the tooltip without always leaving its item readable while it is being set, so
+    -- the comparison is filled again once they return, from the link the game gives for the slot.
+    for method, getLink in pairs(LINK_SOURCES) do
+        if frame[method] then
+            hooksecurefunc(frame, method, function(_, ...)
+                if IsModuleEnabled() then
+                    ShowComparison(pair, getLink(...))
+                end
+            end)
+        end
+    end
     if pair.refillOnLeave then
         -- Blizzard's OnLeave hides these (Shift-while-hovering model); ours stay up with the window.
         frame:HookScript("OnLeave", function()

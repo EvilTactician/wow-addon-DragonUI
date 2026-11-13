@@ -4,7 +4,7 @@
 
 ![Interface Version](https://img.shields.io/badge/Interface-30300-blue)
 ![WoW Version](https://img.shields.io/badge/WoW-3.3.5a-orange)
-[![Version](https://img.shields.io/badge/Version-3.1.0-green)](https://github.com/EvilTactician/wow-addon-DragonUI)
+[![Version](https://img.shields.io/badge/Version-3.1.1-green)](https://github.com/EvilTactician/wow-addon-DragonUI)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 
 **A modular, retail-inspired UI addon for World of Warcraft 3.3.5a (Wrath of the Lich King).**
