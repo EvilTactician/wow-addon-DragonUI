@@ -41,6 +41,27 @@ local COUNTDOWN_STEPS = {
 local DEFAULT_TEXT_ANCHOR = { 'CENTER', 0, 1 }
 local NO_FONT = {}
 
+-- Action buttons, and the item buttons potions and quest items are used from: DragonUI's extra
+-- bars and Bagster (flagged where they are made), the stock bags and the quest tracker's items.
+local ITEM_BUTTON_NAMES = { "^ContainerFrame%d+Item%d+$", "^WatchFrameItem%d+$" }
+
+local function ShowsText(button)
+    if not button then return false end
+    if button.action or button.duiCooldownText then return true end
+    local known = button._duiCooldownTextByName
+    if known == nil then
+        known = false
+        local name = button.GetName and button:GetName()
+        if name then
+            for _, pattern in ipairs(ITEM_BUTTON_NAMES) do
+                if name:find(pattern) then known = true break end
+            end
+        end
+        button._duiCooldownTextByName = known
+    end
+    return known
+end
+
 local function StepFor(secondsLeft)
     for _, step in ipairs(COUNTDOWN_STEPS) do
         if secondsLeft <= step.ceiling then
@@ -80,7 +101,7 @@ local function StopCountdown(cooldown, blankText)
 end
 
 function addon.CooldownText:UpdateText(elapsed)
-    if not self:GetParent().action or not self.remain then
+    if not self.remain then
         return
     end
 
@@ -117,11 +138,11 @@ function addon.CooldownText:CreateText()
 end
 
 function addon.CooldownText:OnSetCooldown(start, duration)
-    -- Only process action button cooldowns, not buff/debuff cooldowns.
+    -- Only process action and item button cooldowns, not buff/debuff cooldowns.
     -- The metatable hook fires for ALL CooldownFrame:SetCooldown calls.
-    -- Buff frames lack .action, and processing them causes unnecessary
-    -- SetPoint/Show calls that interfere with the sweep animation.
-    if not self:GetParent() or not self:GetParent().action then
+    -- Processing aura cooldowns causes unnecessary SetPoint/Show calls that
+    -- interfere with the sweep animation.
+    if not ShowsText(self:GetParent()) then
         return
     end
 

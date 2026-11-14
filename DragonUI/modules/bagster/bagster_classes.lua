@@ -242,6 +242,7 @@ do
 
         -- Cooldown
         item.cooldown = _G[name .. "Cooldown"]
+        item.duiCooldownText = true -- cooldown text on potions and other usable items (cooldowns.lua)
 
         return item
     end

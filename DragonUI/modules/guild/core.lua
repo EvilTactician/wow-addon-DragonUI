@@ -300,13 +300,18 @@ events:RegisterEvent("GUILD_ROSTER_UPDATE")
 events:RegisterEvent("PLAYER_GUILD_UPDATE")
 events:RegisterEvent("GUILD_MOTD")
 events:RegisterEvent("GUILD_EVENT_LOG_UPDATE")
-events:SetScript("OnEvent", function(_, event)
+events:SetScript("OnEvent", function(_, event, arg1)
     if event == "PLAYER_LOGIN" then
         hookLevels()
         if GU:Enabled() then installHandoff() end
         return
     end
     if not GU.IsShown() then return end
+    -- The server says the roster changed (a promotion, a note, someone leaving) and the client's
+    -- copy is out of date; asking again is what the stock guild tab does with this.
+    if event == "GUILD_ROSTER_UPDATE" and arg1 then
+        GuildRoster()
+    end
     if event == "PLAYER_GUILD_UPDATE" then
         if not IsInGuild() then GU.Close() return end
         GU.RequestLevels("STATE")
@@ -318,6 +323,11 @@ events:SetScript("OnEvent", function(_, event)
     end
     GU.Refresh()
 end)
+
+-- After a rank change the server takes a moment; the roster is asked for again once it has.
+function GU.RequestRosterSoon()
+    addon:After(0.5, GuildRoster)
+end
 
 function GuildModule:ApplyGuildSystem()
     hookLevels()

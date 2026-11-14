@@ -352,6 +352,7 @@ local function buildDetail()
         b:SetScript("OnClick", function()
             if not GU.selectedName then return end
             if up then GuildPromote(GU.selectedName) else GuildDemote(GU.selectedName) end
+            GU.RequestRosterSoon()
         end)
         return b
     end
@@ -477,10 +478,10 @@ function GU.ShowMemberMenu(member)
         menuItem(INVITE, function() InviteUnit(name) end, me or not member.online),
     }
     if CanGuildPromote() and member.rankIndex > myRank + 1 then
-        menu[#menu + 1] = menuItem(L("Promote"), function() GuildPromote(name) end)
+        menu[#menu + 1] = menuItem(L("Promote"), function() GuildPromote(name); GU.RequestRosterSoon() end)
     end
     if CanGuildDemote() and member.rankIndex > myRank and member.rankIndex < GuildControlGetNumRanks() - 1 then
-        menu[#menu + 1] = menuItem(L("Demote"), function() GuildDemote(name) end)
+        menu[#menu + 1] = menuItem(L("Demote"), function() GuildDemote(name); GU.RequestRosterSoon() end)
     end
     if CanGuildRemove() and not me and member.rankIndex > myRank then
         menu[#menu + 1] = menuItem(L("Remove from Guild"), function()

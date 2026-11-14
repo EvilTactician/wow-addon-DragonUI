@@ -1594,6 +1594,7 @@ function BarProto:CreateButton(index)
         button.icon = icon
 
         button.cooldown = CreateFrame("Cooldown", name .. "Cooldown", button, "CooldownFrameTemplate")
+        button.duiCooldownText = true -- cooldown text like the action buttons (cooldowns.lua)
 
         -- Named $parentCount + NumberFontNormal: same as ActionButtonTemplate / other bars.
         local count = button:CreateFontString(name .. "Count", "OVERLAY")
