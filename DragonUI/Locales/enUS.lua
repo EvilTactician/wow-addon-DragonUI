@@ -1334,3 +1334,10 @@ L["Waiting"] = true
 L["Everyone passed"] = true
 L["Won by %s"] = true
 L["No roll window: choose here (%ds)"] = true
+
+-- Playerbot heals
+L["Server module detected (protocol %d)."] = true
+L["Off."] = true
+L["The server module uses a newer protocol (%d) than this DragonUI understands; update DragonUI."] = true
+L["Checking for the server module..."] = true
+L["Server module not detected on this server."] = true

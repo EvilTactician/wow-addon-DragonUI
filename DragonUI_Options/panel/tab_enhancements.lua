@@ -468,6 +468,30 @@ local function BuildEnhancementsTab(scroll)
         requiresReload = false,
     })
 
+    C:AddToggle(uflSection, {
+        label = LO["Show Playerbot Heals"],
+        desc = LO["Include playerbots' incoming heals in heal prediction, on unit frames and on the target nameplate. Needs the server module mod-playerbot-heal-tracker; on other servers it does nothing."],
+        getFunc = function()
+            local m = addon.db.profile.modules and addon.db.profile.modules.playerbot_heals
+            return m and m.enabled == true or false
+        end,
+        setFunc = function(val)
+            if not addon.db.profile.modules.playerbot_heals then
+                addon.db.profile.modules.playerbot_heals = {}
+            end
+            addon.db.profile.modules.playerbot_heals.enabled = val
+            if addon.BotHeals then addon.BotHeals.Refresh() end
+        end,
+        requiresReload = false,
+    })
+
+    local botHealsStatus = C:AddDescription(uflSection, addon.BotHeals and addon.BotHeals.GetStatusText() or "")
+    if addon.BotHeals and botHealsStatus and botHealsStatus.SetText then
+        addon.BotHeals.onStatusChanged = function()
+            if botHealsStatus.SetText then botHealsStatus:SetText(addon.BotHeals.GetStatusText()) end
+        end
+    end
+
     -- ====================================================================
     -- LOW HP ALERT MODULE
     -- ====================================================================

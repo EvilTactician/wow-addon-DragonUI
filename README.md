@@ -4,7 +4,7 @@
 
 ![Interface Version](https://img.shields.io/badge/Interface-30300-blue)
 ![WoW Version](https://img.shields.io/badge/WoW-3.3.5a-orange)
-[![Version](https://img.shields.io/badge/Version-3.2.1-green)](https://github.com/EvilTactician/wow-addon-DragonUI)
+[![Version](https://img.shields.io/badge/Version-3.2.2-green)](https://github.com/EvilTactician/wow-addon-DragonUI)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 
 **A modular, retail-inspired UI addon for World of Warcraft 3.3.5a (Wrath of the Lich King).**
@@ -47,6 +47,9 @@ It is developed and tested on an AzerothCore server with playerbots.
 - **Your target's nameplate**: friendly targets can get a nameplate while targeted, with
   every other friendly plate kept hidden. On any target, friendly or hostile, its plate
   can show incoming heals and absorb shields, and a friendly target's missing health.
+- **Playerbot heals**: on servers running
+  [mod-playerbot-heal-tracker](https://github.com/EvilTactician/mod-playerbot-heal-tracker),
+  playerbots' incoming heals show in heal prediction on unit frames and nameplates.
 - **Target marker**: an optional chevron above your target's name, green for friendly,
   yellow for neutral and red for hostile, with size and height settings.
 - **Party buffs and debuffs**: an optional line of debuffs, then buffs, under each party

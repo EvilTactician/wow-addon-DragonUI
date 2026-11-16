@@ -1408,6 +1408,9 @@ local defaults = {
             versioncheck = {
                 enabled = true, -- Cross-player version broadcast and update detection
             },
+            playerbot_heals = {
+                enabled = false, -- Ask mod-playerbot-heal-tracker for playerbot heals (heal prediction)
+            },
             collections = {
                 enabled = true, -- Dedicated Pets & Mounts window opened from the micro menu
             },
