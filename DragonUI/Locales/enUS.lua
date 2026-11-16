@@ -1336,8 +1336,9 @@ L["Won by %s"] = true
 L["No roll window: choose here (%ds)"] = true
 
 -- Playerbot heals
-L["Server module detected (protocol %d)."] = true
-L["Off."] = true
-L["The server module uses a newer protocol (%d) than this DragonUI understands; update DragonUI."] = true
-L["Checking for the server module..."] = true
-L["Server module not detected on this server."] = true
+L["Server module:"] = true
+L["mod-playerbot-heal-tracker detected (version %s)"] = true
+L["mod-playerbot-heal-tracker is newer (protocol %d) than this DragonUI supports; update DragonUI"] = true
+L["not checked (option off)"] = true
+L["checking..."] = true
+L["not detected on this server"] = true
