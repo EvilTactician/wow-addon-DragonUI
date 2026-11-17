@@ -517,6 +517,7 @@ L["Model control dump failed: "] = true
 -- Pets & Mounts
 L["Pets & Mounts"] = true
 L["The mounts and pets you have collected."] = true
+L["Your professions and secondary skills: craft, and see what to train and level next."] = true
 L["Dedicated window for your mounts and pets, opened from the micro menu"] = true
 L["Pets & Mounts disabled. Reload the UI to remove its micro menu button."] = true
 L["Favorite"] = true

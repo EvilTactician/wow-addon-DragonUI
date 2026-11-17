@@ -27,15 +27,23 @@ btn:RegisterForClicks("LeftButtonUp")
 btn:SetScript("OnClick", function()
     if addon.ToggleProfessionsBook then addon.ToggleProfessionsBook() end
 end)
--- Forever's button has no newbie line; the anchor still follows GameTooltip_AddNewbieTip like its neighbours.
+-- Like Character Info: title with its key, and a description line when beginner tooltips are on.
+-- The key is DragonUI's binding, or Retail Professions' (it takes K on first run when K is free).
+local BINDING_SOURCES = { BINDING, "RETAILPROFESSIONS_BOOK" }
+btn.tooltipText = TRADE_SKILLS
+btn.newbieText = addon.L["Your professions and secondary skills: craft, and see what to train and level next."]
 btn:SetScript("OnEnter", function(self)
-    if SHOW_NEWBIE_TIPS == "1" then
-        GameTooltip_SetDefaultAnchor(GameTooltip, self)
-    else
-        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+    -- Rebuilt per hover rather than cached: a rebind would otherwise show the old key until reload.
+    local text = self.tooltipText
+    if MicroButtonTooltipText then
+        for _, action in ipairs(BINDING_SOURCES) do
+            if GetBindingKey(action) then
+                text = MicroButtonTooltipText(text, action)
+                break
+            end
+        end
     end
-    GameTooltip:SetText(MicroButtonTooltipText(TRADE_SKILLS, BINDING), 1, 1, 1)
-    GameTooltip:Show()
+    GameTooltip_AddNewbieTip(self, text, 1.0, 1.0, 1.0, self.newbieText)
 end)
 btn:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
