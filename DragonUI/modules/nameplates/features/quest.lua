@@ -455,8 +455,11 @@ local function SyncQuestIcon(plateData, context)
     local unit = context and context.resolvedUnit or NP.gather.ResolvePlateToken(plateData)
 
     local hasObj, objType
-    -- Token first (most precise): resolve live and remember it.
-    if unit and UnitExists(unit) and not UnitIsPlayer(unit) then
+    -- Token first (most precise): resolve live and remember it. The token must name this plate's
+    -- mob: a token caught on a neighbour (mouseover moving on) would hand its quest to this plate.
+    local plateKey = NormalizedPlateName(plateData)
+    if unit and UnitExists(unit) and not UnitIsPlayer(unit)
+        and (not plateKey or NormalizeName(UnitName(unit)) == plateKey) then
         local tag
         hasObj, objType, tag = ResolveQuestForPlate(plateData, unit, pointerMode)
         if hasObj then
@@ -466,6 +469,7 @@ local function SyncQuestIcon(plateData, context)
             end
             local p = plateData._questPersist or {}
             p.objType, p.tag, p.ver, p.pointer = objType, tag, questLogVersion, pointerMode
+            p.name = plateKey
             plateData._questPersist = p
         end
     end
@@ -486,8 +490,9 @@ local function SyncQuestIcon(plateData, context)
     end
     if not hasObj then
         -- Last resort: the persisted icon while its objective stays active.
+        -- Only for the mob it was learned on: a frame can change occupant without being re-shown.
         local p = plateData._questPersist
-        if p and IsPersistValid(p) then
+        if p and p.name == plateKey and IsPersistValid(p) then
             hasObj, objType = true, p.objType
         else
             plateData._questPersist = nil
