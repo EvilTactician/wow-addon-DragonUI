@@ -527,6 +527,23 @@ local function DoRebuildIndexes()
     questLogVersion = questLogVersion + 1
 end
 
+-- Item objectives are counted from the bags, and the new count can reach the quest log after
+-- the quest events (and the next tick) have passed; the finished objective then stayed indexed
+-- and its mobs kept their bag icon. One more rebuild once things settle, shared by a burst.
+local SETTLE_DELAY = 0.5
+local settleAt
+local settleFrame = CreateFrame("Frame")
+settleFrame:Hide()
+settleFrame:SetScript("OnUpdate", function(self)
+    if not settleAt or GetTime() < settleAt then return end
+    settleAt = nil
+    self:Hide()
+    local q = NP.config.GetCfg().questIcons
+    if not q or q.enabled ~= true then return end
+    DoRebuildIndexes()
+    QueueQuestRefresh()
+end)
+
 -- Quest changed: rebuild indexes now (coalesced per tick), bump version, refresh.
 function NP.quest.OnQuestLogChanged()
     local q = NP.config.GetCfg().questIcons
@@ -537,6 +554,8 @@ function NP.quest.OnQuestLogChanged()
         DoRebuildIndexes()
     end
     pendingRebuildFrame = frame or 0
+    settleAt = GetTime() + SETTLE_DELAY
+    settleFrame:Show()
     QueueQuestRefresh()
 end
 
