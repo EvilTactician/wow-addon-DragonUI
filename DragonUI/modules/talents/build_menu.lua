@@ -236,14 +236,14 @@ ns.DefinePopup("DUI_TALENT_BUILD_LEVEL",
 local function importCode(self)
     local decoded = TM.DecodeBuildCode(ns.PopupEdit(self):GetText() or "")
     if not decoded then
-        ns.Notify(format(L["Talent import: %s"], L["couldn't read a talent code"]), "error")
+        ns.Notify(L["Only talent codes exported from DragonUI are supported."], "error")
         return
     end
     local record, own = ns.KeepBuild(decoded)
     if record and own then ns.EnterEditor(record) end
 end
 
-ns.DefinePopup("DUI_TALENT_IMPORT", L["Paste a DragonUI talent code:"], L["Import"], CANCEL, {
+ns.DefinePopup("DUI_TALENT_IMPORT", L["Paste a talent code exported from DragonUI."], L["Import"], CANCEL, {
     hasEditBox = 1,
     hasWideEditBox = 1,
     maxLetters = 0,
