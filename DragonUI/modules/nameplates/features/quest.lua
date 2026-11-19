@@ -68,6 +68,45 @@ do
     killNamePattern = "^" .. fmt .. "$"
 end
 
+-- A creature objective with the quest's own wording ("Kodos Tamed", "Captive Freed") can be
+-- something done to the creature rather than a kill. Kill words win, then non-kill words; anything
+-- else stays a kill as before. Whole words, English clients only (the words would be wrong elsewhere).
+local KILL_WORDS = {
+    "slain", "slay", "killed", "kill", "defeated", "defeat", "destroyed", "destroy", "exploded",
+    "slaughtered", "eliminated", "assassinated", "exterminated", "obliterated", "trampled",
+    "shot down", "death",
+}
+local NONKILL_WORDS = {
+    "tamed", "freed", "free", "rescued", "rescue", "saved", "spoken", "speak", "questioned",
+    "interrogated", "healed", "heal", "cured", "fed", "captured", "delivered", "returned",
+    "escorted", "inoculated", "infected", "blessed", "revived", "resurrected", "released",
+    "tagged", "trapped", "wrangled", "disciplined", "dominated", "turned", "insulted", "sprayed",
+    "analyzed", "warned", "awoken", "lured", "motivated", "recruited", "initiated", "admitted",
+    "submitted", "found", "rallied", "strengthened", "weakened", "frightened", "dragged",
+    "subdued", "drunk", "cleansed",
+}
+local classifyByWords
+do
+    local locale = GetLocale and GetLocale()
+    classifyByWords = locale == "enUS" or locale == "enGB"
+end
+
+local function HasWord(text, words)
+    for _, word in ipairs(words) do
+        if text:find("%f[%a]" .. word .. "%f[%A]") then return true end
+    end
+    return false
+end
+
+-- "kill" or "interact" for a "monster" leaderboard line.
+local function CreatureObjectiveKind(desc)
+    if strmatch(desc, killNamePattern) or not classifyByWords then return "kill" end
+    local text = desc:lower()
+    if HasWord(text, KILL_WORDS) then return "kill" end
+    if HasWord(text, NONKILL_WORDS) then return "interact" end
+    return "kill"
+end
+
 -- Persistent learned loot sources: [mobName] = {objectiveText=true}. nil until AceDB is ready.
 local function GetLearnedDB()
     local db = addon.db
@@ -153,8 +192,13 @@ local function RebuildObjectiveIndex()
                 if desc and not finished then
                     local norm = NormalizeObjectiveText(desc)
                     if norm and norm ~= "" then
-                        objectiveTypeIndex[norm] =
-                            (objType == "item" or objType == "object") and "loot" or "kill"
+                        if objType == "item" or objType == "object" then
+                            objectiveTypeIndex[norm] = "loot"
+                        elseif objType == "monster" then
+                            objectiveTypeIndex[norm] = CreatureObjectiveKind(desc)
+                        else
+                            objectiveTypeIndex[norm] = "kill"
+                        end
                     end
                     if objType == "monster" then
                         local mobName = strmatch(desc, killNamePattern)
@@ -187,8 +231,8 @@ local function ScanUnitForQuest(unit, pointerMode)
     local numLines = QuestScanTip:NumLines()
 
     local hasObj = false
-    local foundKill, foundLoot = false, false
-    local killKey, lootKey
+    local foundKill, foundLoot, foundInteract = false, false, false
+    local killKey, lootKey, interactKey
     for i = 2, numLines do
         local fs = _G["DragonUINPQuestScanTextLeft" .. i]
         local text = fs and fs.GetText and fs:GetText()
@@ -212,6 +256,8 @@ local function ScanUnitForQuest(unit, pointerMode)
                     foundLoot, lootKey = true, norm
                 elseif t == "kill" then
                     foundKill, killKey = true, norm
+                elseif t == "interact" then
+                    foundInteract, interactKey = true, norm
                 end
             end
         end
@@ -223,6 +269,8 @@ local function ScanUnitForQuest(unit, pointerMode)
             return true, "loot", lootKey
         elseif foundKill or foundLoot then
             return true, "kill", killKey or lootKey
+        elseif foundInteract then
+            return true, "interact", interactKey
         end
         return false, nil, nil
     end
@@ -387,6 +435,7 @@ local function GetActiveIconKey(q, objType, isElite)
     if objType == "loot" then
         return (q.lootIcon == "chest") and "chest" or "bag"
     end
+    if objType == "interact" then return "interact" end
     if isElite and q.eliteKillIcon then return "elite" end
     return (q.killIcon == "skull") and "skull" or "sword"
 end

@@ -114,6 +114,7 @@ C.QUEST_ICON_TEX = {
     elite = C.MINA_TEX .. "Quests\\Kill\\kill_elite",
     bag = C.MINA_TEX .. "Quests\\Loot\\loot_bag",
     chest = C.MINA_TEX .. "Quests\\Loot\\loot_chest",
+    interact = C.MINA_TEX .. "Quests\\Interact\\interact_book",
 }
 
 C.NAMEPLATE_FONT_MAP = {
