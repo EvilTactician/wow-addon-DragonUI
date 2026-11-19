@@ -102,7 +102,7 @@ local function styleEntrance(pin, entry)
     -- The client localizes the LFG dungeon; the generated name covers instances outside that list.
     pin.name = (entry.lfg and GetLFGDungeonInfo(entry.lfg)) or entry.name
     local kind = entry.raid and RAID or LFG_TYPE_DUNGEON
-    local levels = WM.DungeonLevelText(entry.lfg)
+    local levels = WM.DungeonLevelText(entry.lfg, entry.raid)
     pin.kind = levels and (kind .. " " .. levels) or kind
     pin.icon:SetAtlasTexture(entry.raid and "map-entrance-raid" or "map-entrance-dungeon")
     pin:SetSize(ENTRANCE_SIZE, ENTRANCE_SIZE)

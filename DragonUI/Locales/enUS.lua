@@ -1343,3 +1343,8 @@ L["mod-playerbot-heal-tracker is newer (protocol %d) than this DragonUI supports
 L["not checked (option off)"] = true
 L["checking..."] = true
 L["not detected on this server"] = true
+
+-- World map entrance levels (as the Journal writes them)
+L["Level %d-%d"] = true
+L[", best %s"] = true
+L["(%d player)"] = true
