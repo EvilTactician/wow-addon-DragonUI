@@ -1953,6 +1953,7 @@ local function BuildQuestSubTab(scroll)
             bag = LO["Bag"],
             chest = LO["Chest"],
             pointer = LO["Pointer"],
+            interact = LO["Book"],
         },
         width = 220,
         disabled = IsQuestIconsDisabled,
@@ -2001,6 +2002,11 @@ local function BuildQuestSubTab(scroll)
         callback = RefreshAndRebuildNameplates,
     })
     AddIconRow(lootS, function() return C:GetDBValue(DB .. ".questIcons.lootIcon") end)
+
+    -- Book icon: creature objectives that aren't kills ("Kodos Tamed", "Captive Freed")
+    local bookS = C:AddSection(scroll, LO["Book (non-kill objectives)"])
+    C:AddDescription(bookS, LO["Shown on creatures a quest needs something done to rather than killed, such as taming, freeing or speaking to them (English clients)."])
+    AddIconRow(bookS, function() return "interact" end)
 
     -- Pointer icon
     local ptrS = C:AddSection(scroll, LO["Pointer Icon"])

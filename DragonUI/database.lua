@@ -1219,6 +1219,7 @@ local defaults = {
                         bag     = { x = -90, y = 7, size = 26 },
                         chest   = { x = -90, y = 7, size = 22 },
                         pointer = { x = -78, y = 7, size = 28 },
+                        interact = { x = -90, y = 7, size = 24 },
                     },
                 },
                 showTotemIcons = false, -- show totem icon on shaman totem nameplates
