@@ -1475,6 +1475,7 @@ local defaults = {
             },
             guild = {
                 enabled = true, -- Retail-style guild window with roster, news and guild perks
+                showRankChanges = false, -- News feed lists promotions and demotions
             },
             socialskin = {
                 enabled = true, -- Retail-style friends, who, chat and raid window

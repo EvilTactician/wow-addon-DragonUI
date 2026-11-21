@@ -14,12 +14,13 @@ local CLASS_ICONS = "Interface\\WorldStateFrame\\Icons-Classes"
 
 -- Widths with and without the Guild XP column; Note takes what XP leaves.
 local COLUMNS = {
-    { key = "name", label = NAME, width = 128, justify = "LEFT" },
-    { key = "level", label = LEVEL_ABBR or "Lvl", width = 34, justify = "CENTER" },
+    { key = "name", label = NAME, width = 112, justify = "LEFT" },
+    { key = "level", label = LEVEL_ABBR or "Lvl", width = 40, justify = "CENTER" },
     { key = "zone", label = ZONE, width = 112, justify = "LEFT" },
     { key = "rank", label = RANK, width = 88, justify = "LEFT" },
-    { key = "note", label = L("Note"), width = 96, justify = "LEFT" },
-    { key = "xp", label = L("Guild XP"), width = 64, justify = "RIGHT", levels = true },
+    { key = "note", label = L("Note"), width = 76, justify = "LEFT" },
+    -- This week's guild XP: room for "1,234,567" and the header beside its sort arrow.
+    { key = "xp", label = L("Week XP"), width = 94, justify = "RIGHT", levels = true },
 }
 
 local pane, list, scroll, rows, headers = nil, nil, nil, {}, {}
@@ -31,8 +32,13 @@ local function hasLevels()
     return GU.Levels() ~= nil
 end
 
+local XP_WIDTH
+for _, column in ipairs(COLUMNS) do
+    if column.key == "xp" then XP_WIDTH = column.width end
+end
+
 local function columnWidth(column)
-    if column.key == "note" and not hasLevels() then return column.width + 64 end
+    if column.key == "note" and not hasLevels() then return column.width + XP_WIDTH end
     return column.width
 end
 

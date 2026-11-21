@@ -116,6 +116,17 @@ local function levelsItem(item, now)
     return entry
 end
 
+-- Promotions and demotions are left out of the feed unless asked for (off by default).
+local function guildConfig()
+    local modules = addon.db and addon.db.profile and addon.db.profile.modules
+    return modules and modules.guild
+end
+
+function GU.ShowRankChanges()
+    local cfg = guildConfig()
+    return cfg and cfg.showRankChanges == true or false
+end
+
 -- Ages are kept as of the build and aged at draw time, so the list is only rebuilt when the
 -- GuildLevels feed or the event log changes, not on every roster update.
 function GU.MarkNewsDirty()
@@ -135,8 +146,10 @@ local function buildNews()
             if entry then news[#news + 1] = entry end
         end
     end
+    local showRanks = GU.ShowRankChanges()
     for i = 1, (GetNumGuildEvents and GetNumGuildEvents() or 0) do
         local kind, player1, player2, rank, years, months, days, hours = GetGuildEventInfo(i)
+        if not showRanks and (kind == "promote" or kind == "demote") then kind = nil end
         local text = kind and eventText(kind, who(player1), who(player2), rank)
         if text then
             local ago, label = GU.EventAge(years, months, days, hours)
@@ -170,11 +183,13 @@ local function newsRow(i)
 
     row.time = row:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     row.time:SetPoint("TOPRIGHT", row, "TOPRIGHT", -2, -3)
+    row.time:SetWidth(64)
     row.time:SetJustifyH("RIGHT")
 
+    -- Ends where the time column starts, so a long line wraps instead of running under the time.
     row.text = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     row.text:SetPoint("TOPLEFT", row.icon, "TOPRIGHT", 8, 2)
-    row.text:SetPoint("RIGHT", row, "RIGHT", -70, 0)
+    row.text:SetPoint("RIGHT", row.time, "LEFT", -4, 0)
     row.text:SetHeight(30)
     row.text:SetJustifyH("LEFT")
     row.text:SetJustifyV("MIDDLE")
@@ -312,6 +327,23 @@ local function build(frame)
     newsInset:SetPoint("BOTTOMRIGHT", pane, "BOTTOMRIGHT", 0, 0)
     local newsHeading = GU.Heading(newsInset, L("News"))
     newsHeading:SetPoint("TOPLEFT", newsInset, "TOPLEFT", 10, -10)
+
+    local rankToggle = CreateFrame("CheckButton", "DragonUIGuildNewsRankChanges", newsInset, "UICheckButtonTemplate")
+    rankToggle:SetSize(20, 20)
+    rankToggle:SetPoint("TOPRIGHT", newsInset, "TOPRIGHT", -6, -5)
+    local rankLabel = _G[rankToggle:GetName() .. "Text"]
+    rankLabel:ClearAllPoints()
+    rankLabel:SetPoint("RIGHT", rankToggle, "LEFT", -1, 1)
+    rankLabel:SetFontObject("GameFontHighlightSmall")
+    rankLabel:SetText(L("Show rank changes"))
+    rankToggle:SetChecked(GU.ShowRankChanges())
+    rankToggle:SetScript("OnShow", function(self) self:SetChecked(GU.ShowRankChanges()) end)
+    rankToggle:SetScript("OnClick", function(self)
+        local cfg = guildConfig()
+        if cfg then cfg.showRankChanges = self:GetChecked() and true or false end
+        GU.MarkNewsDirty()
+        GU.RefreshNews()
+    end)
 
     newsScroll = CreateFrame("ScrollFrame", "DragonUIGuildNewsScroll", newsInset, "FauxScrollFrameTemplate")
     newsScroll:SetPoint("TOPLEFT", newsInset, "TOPLEFT", 0, -30)

@@ -203,9 +203,9 @@ function GU.Ago(seconds)
     seconds = math.max(0, seconds or 0)
     if seconds < 60 then return localized("Just now") end
     local minutes = math.floor(seconds / 60)
-    if minutes < 60 then return format(localized("%d |4minute:minutes; ago"), minutes) end
+    if minutes < 60 then return format(localized("%d min ago"), minutes) end
     local hours = math.floor(minutes / 60)
-    if hours < 24 then return format(localized("%d |4hour:hours; ago"), hours) end
+    if hours < 24 then return format(localized("%d |4hr:hrs; ago"), hours) end
     local days = math.floor(hours / 24)
     if days < 30 then return format(localized("%d |4day:days; ago"), days) end
     local months = math.floor(days / 30)
@@ -221,14 +221,14 @@ end
 -- The event log's age: whole hours, so 0 is anything under an hour.
 function GU.EventAge(years, months, days, hours)
     local seconds = GU.ElapsedSeconds(years, months, days, hours)
-    if seconds == 0 then return 1800, localized("Less than an hour ago") end
+    if seconds == 0 then return 1800, localized("< 1 hr ago") end
     return seconds
 end
 
 function GU.LastOnline(index)
     local years, months, days, hours = GetGuildRosterLastOnline(index)
     if not years then return end
-    if years == 0 and months == 0 and days == 0 and hours == 0 then return localized("Less than an hour ago") end
+    if years == 0 and months == 0 and days == 0 and hours == 0 then return localized("< 1 hr ago") end
     return GU.Ago(GU.ElapsedSeconds(years, months, days, hours))
 end
 
