@@ -50,8 +50,8 @@ end
 -- Panes
 -- ---------------------------------------------------------------------------------------------
 
--- A pane: key, label, icon, build(pane) once, refresh(pane) on every update, and shown(pane)
--- each time it is selected.
+-- A pane: key, label (text, or a function returning it), icon, build(pane) once, refresh(pane)
+-- on every update, and shown(pane) each time it is selected.
 function GU.RegisterPane(info)
     panes[info.key] = info
     paneOrder[#paneOrder + 1] = info
@@ -329,7 +329,13 @@ local function refreshCard()
     card.levelText:SetText(format(L("Level %d Guild"), gl.level))
     card.week:SetText(format(L("This week: |cffffffff%s|r guild XP"), GU.Number(gl.myWeek)))
     card.total:SetText(format(L("In all: |cffffffff%s|r guild XP"), GU.Number(gl.myTotal)))
-    card.cash:SetText(format(L("Cash Flow this week: %s"), gl.Money and gl.Money(gl.myCashWeek) or GU.Number(gl.myCashWeek)))
+    -- The realm can name the cash line itself (GuildLevels.cashLabel); "Cash Flow" otherwise.
+    local cashMoney = gl.Money and gl.Money(gl.myCashWeek) or GU.Number(gl.myCashWeek)
+    if type(gl.cashLabel) == "string" and gl.cashLabel ~= "" then
+        card.cash:SetText(format(L("%s this week: %s"), gl.cashLabel, cashMoney))
+    else
+        card.cash:SetText(format(L("Cash Flow this week: %s"), cashMoney))
+    end
     if nextPerk then
         card.nextIcon:SetTexture("Interface\\Icons\\" .. ((gl.ICONS and gl.ICONS[nextPerk.level]) or "INV_Misc_QuestionMark"))
         card.nextName:SetText(nextPerk.name)
@@ -361,7 +367,7 @@ local function buildSideTab(index, info)
     end
     tab:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:SetText(info.label)
+        GameTooltip:SetText(type(info.label) == "function" and info.label() or info.label)
         GameTooltip:Show()
     end)
     tab:SetScript("OnLeave", GameTooltip_Hide)

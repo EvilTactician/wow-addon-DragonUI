@@ -7,7 +7,8 @@ local L = GU.L
 -- Guild Benefits pane, retail's perks and rewards side by side. Perks are GuildLevels' list: the
 -- guild's in colour, the rest dimmed with the level they come at. Rewards are listed when the
 -- server sends them (GuildLevels.rewards: { name, icon, level, requirement, cost, item, earned });
--- until then the pane says there are none.
+-- until then the pane says there are none. A realm without rewards (GuildLevels.noRewards) gets
+-- the perk list across the whole pane and the tab reads "Perks".
 
 local ROW_H = 46
 
@@ -108,8 +109,16 @@ local function refresh()
     local gl = GU.Levels()
     noLevels:SetShownCompat(gl == nil)
     perkInset:SetShownCompat(gl ~= nil)
-    rewardInset:SetShownCompat(gl ~= nil)
+    local noRewards = gl ~= nil and gl.noRewards == true
+    rewardInset:SetShownCompat(gl ~= nil and not noRewards)
     if not gl then return end
+    perkInset:ClearAllPoints()
+    perkInset:SetPoint("TOPLEFT", pane, "TOPLEFT", 0, 0)
+    if noRewards then
+        perkInset:SetPoint("BOTTOMRIGHT", pane, "BOTTOMRIGHT", 0, 0)
+    else
+        perkInset:SetPoint("BOTTOMRIGHT", pane, "BOTTOM", -5, 0)
+    end
 
     refreshList(perkInset, perkScroll, perkRows, gl.perks or {}, function(row, perk)
         local earned = gl.level >= perk.level
@@ -167,7 +176,11 @@ local function build(frame)
 end
 
 GU.RegisterPane({
-    key = "benefits", label = L("Perks & Rewards"), icon = "Achievement_Reputation_01",
+    key = "benefits", icon = "Achievement_Reputation_01",
+    label = function()
+        local gl = _G.GuildLevels
+        return (type(gl) == "table" and gl.noRewards == true) and L("Perks") or L("Perks & Rewards")
+    end,
     build = build, refresh = refresh,
     shown = function() GU.RequestLevels("STATE") end,
 })
