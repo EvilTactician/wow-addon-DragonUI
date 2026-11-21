@@ -330,7 +330,8 @@ local function build(frame)
 
     local rankToggle = CreateFrame("CheckButton", "DragonUIGuildNewsRankChanges", newsInset, "UICheckButtonTemplate")
     rankToggle:SetSize(20, 20)
-    rankToggle:SetPoint("TOPRIGHT", newsInset, "TOPRIGHT", -6, -5)
+    -- Left of the scroll bar's column (the scroll frame stops 24 short of the inset's edge).
+    rankToggle:SetPoint("TOPRIGHT", newsInset, "TOPRIGHT", -28, -5)
     local rankLabel = _G[rankToggle:GetName() .. "Text"]
     rankLabel:ClearAllPoints()
     rankLabel:SetPoint("RIGHT", rankToggle, "LEFT", -1, 1)
