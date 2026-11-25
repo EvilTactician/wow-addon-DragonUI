@@ -928,6 +928,32 @@ local function BuildBagsTab(scroll)
     -- INVENTORY CATEGORY TABS
     -- ====================================================================
     local tabSection = C:AddSection(scroll, LO["Inventory Tabs"])
+
+    -- Sectioned layout (modules/bagster/bagster_sections.lua) replaces these tabs, so they grey out while it's on.
+    local function IsSectioned()
+        local mc = addon.db.profile.modules and addon.db.profile.modules.bagster
+        return mc and mc.sections == true
+    end
+    local function TabsDisabled()
+        return not IsBagsterEnabled() or IsSectioned()
+    end
+
+    C:AddToggle(tabSection, {
+        label = LO["Sectioned Layout"],
+        desc = LO["Show the inventory split into sections instead of using the category tabs: Hearthstone, Potion, Food, Consumable, Devices and Quest on top, then Equipment (Armor, Weapon, Trinket), Crafting, Miscellaneous and Empty. Click a section title to fold it. The rarity filter and search stay; the bank is not changed."],
+        getFunc = function() return IsSectioned() end,
+        setFunc = function(val)
+            if addon.SetBagsterSections then
+                addon.SetBagsterSections(val)
+            else
+                C:EnsureModuleTable("bagster")
+                addon.db.profile.modules.bagster.sections = val and true or false
+            end
+            Panel:SelectTab("bags")
+        end,
+        disabled = function() return not IsBagsterEnabled() end,
+    })
+
     C:AddDescription(tabSection, LO["Choose which category tabs appear on the inventory bag frame."])
 
     -- "All" tab
@@ -936,7 +962,7 @@ local function BuildBagsTab(scroll)
         tooltip = LO["Show the 'All' category tab that displays all items without filtering."],
         getFunc = function() return HasSetInDB(SET_ALL) end,
         setFunc = function(val) ToggleInventorySet(SET_ALL, val) end,
-        disabled = function() return not IsBagsterEnabled() end,
+        disabled = TabsDisabled,
     })
 
     -- Category tabs (canonical set names)
@@ -950,7 +976,7 @@ local function BuildBagsTab(scroll)
         tooltip = LO["Show the Equipment category tab for armor and weapons."],
         getFunc = function() return HasSetInDB(Equipment) end,
         setFunc = function(val) ToggleInventorySet(Equipment, val) end,
-        disabled = function() return not IsBagsterEnabled() end,
+        disabled = TabsDisabled,
     })
 
     -- Usable
@@ -959,7 +985,7 @@ local function BuildBagsTab(scroll)
         tooltip = LO["Show the Usable category tab for consumables and devices."],
         getFunc = function() return HasSetInDB(Usable) end,
         setFunc = function(val) ToggleInventorySet(Usable, val) end,
-        disabled = function() return not IsBagsterEnabled() end,
+        disabled = TabsDisabled,
     })
 
     -- Quest
@@ -968,7 +994,7 @@ local function BuildBagsTab(scroll)
         tooltip = LO["Show the Quest items category tab."],
         getFunc = function() return HasSetInDB(Quest) end,
         setFunc = function(val) ToggleInventorySet(Quest, val) end,
-        disabled = function() return not IsBagsterEnabled() end,
+        disabled = TabsDisabled,
     })
 
     -- Trade Goods
@@ -977,7 +1003,7 @@ local function BuildBagsTab(scroll)
         tooltip = LO["Show the Trade Goods category tab (includes gems and recipes)."],
         getFunc = function() return HasSetInDB(TradeGood) end,
         setFunc = function(val) ToggleInventorySet(TradeGood, val) end,
-        disabled = function() return not IsBagsterEnabled() end,
+        disabled = TabsDisabled,
     })
 
     -- Miscellaneous
@@ -986,7 +1012,7 @@ local function BuildBagsTab(scroll)
         tooltip = LO["Show the Miscellaneous items category tab."],
         getFunc = function() return HasSetInDB(Misc) end,
         setFunc = function(val) ToggleInventorySet(Misc, val) end,
-        disabled = function() return not IsBagsterEnabled() end,
+        disabled = TabsDisabled,
     })
 
     -- ====================================================================

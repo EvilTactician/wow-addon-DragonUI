@@ -1903,3 +1903,14 @@ L["This realm doesn't keep a personal XP rate, or hasn't answered yet."] = true
 L["XP gain is off: this character doesn't level."] = true
 L["Your rate is %s. It grows with your level until level %d, so the first levels don't fly by: %s right now."] = true
 L["Your rate is %s."] = true
+
+-- Bagster sectioned inventory (Bags tab)
+L["Sectioned Layout"] = true
+L["Show the inventory split into sections instead of using the category tabs: Hearthstone, Potion, Food, Consumable, Devices and Quest on top, then Equipment (Armor, Weapon, Trinket), Crafting, Miscellaneous and Empty. Click a section title to fold it. The rarity filter and search stay; the bank is not changed."] = true
+
+-- Rogue poisons (Enhancements tab, mod-class-tweaks)
+L["Rogue Poisons"] = true
+L["Your realm can put your weapon poisons back on when they wear off, using the same poison from your bags. The realm keeps these settings for each character."] = true
+L["Auto-apply poisons in dungeons/raids"] = true
+L["Also auto-apply outside dungeons/raids"] = true
+L["The realm has auto-apply outside dungeons and raids turned off."] = true

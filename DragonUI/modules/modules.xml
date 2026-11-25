@@ -87,6 +87,8 @@
     <Script file="servercurrency.lua"/>
     <!-- Server-kept personal XP rate (XP bar tooltip + right-click menu, XP & Rep Bars settings) -->
     <Script file="xprate.lua"/>
+    <!-- Server-kept rogue poison auto-apply (mod-class-tweaks; Enhancements settings, rogues only) -->
+    <Script file="classtweaks.lua"/>
     <!-- Per-character bag, bank and equipped counts in item tooltips -->
     <Script file="itemownership.lua"/>
 

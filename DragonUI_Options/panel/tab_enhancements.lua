@@ -996,6 +996,58 @@ local function BuildEnhancementsTab(scroll)
         callback = RefreshAutoAcceptCaches,
         requiresReload = false,
     })
+
+    -- ====================================================================
+    -- ROGUE POISONS (server-kept, see DragonUI/modules/classtweaks.lua)
+    -- Only once the realm's mod-class-tweaks has answered; a click sends the choice and the
+    -- checkbox stays as it was until the realm confirms it (the tab then rebuilds).
+    -- ====================================================================
+    local CT = addon.ClassTweaks
+    local st = CT and CT.State()
+    if st then
+        C:AddSpacer(scroll)
+        local rogueSection = C:AddSection(scroll, LO["Rogue Poisons"])
+
+        C:AddDescription(rogueSection, LO["Your realm can put your weapon poisons back on when they wear off, using the same poison from your bags. The realm keeps these settings for each character."])
+
+        local autoToggle, outsideToggle
+        autoToggle = C:AddToggle(rogueSection, {
+            label = LO["Auto-apply poisons in dungeons/raids"],
+            getFunc = function() return st.autoApply end,
+            setFunc = function(value)
+                CT.SetAutoApply(value)
+                local now = CT.State()
+                if autoToggle and autoToggle.SetValue and now then autoToggle:SetValue(now.autoApply) end
+            end,
+        })
+
+        outsideToggle = C:AddToggle(rogueSection, {
+            label = LO["Also auto-apply outside dungeons/raids"],
+            getFunc = function() return st.outside and st.outsideAllowed end,
+            setFunc = function(value)
+                CT.SetOutside(value)
+                local now = CT.State()
+                if outsideToggle and outsideToggle.SetValue and now then
+                    outsideToggle:SetValue(now.outside and now.outsideAllowed)
+                end
+            end,
+            disabled = not st.autoApply or not st.outsideAllowed,
+            indent = 18,
+        })
+
+        if not st.outsideAllowed then
+            C:AddDescription(rogueSection, LO["The realm has auto-apply outside dungeons and raids turned off."])
+        end
+    end
+end
+
+-- A realm answer that changes the rogue settings rebuilds the tab while it shows (keeps the scroll).
+if addon.ClassTweaks then
+    addon.ClassTweaks.OnChange(function()
+        if Panel:IsOpen() and Panel.currentTab == "enhancements" then
+            Panel:SelectTab("enhancements")
+        end
+    end)
 end
 
 -- Register the tab (order 11 = after Quest Tracker, before Profiles)

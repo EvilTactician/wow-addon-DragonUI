@@ -1377,6 +1377,7 @@ local defaults = {
                 glow_alpha = 1, -- Quality ring opacity
                 show_quality_filter = true, -- Rarity filter dots centered on the bottom band
                 tooltip_count = true, -- Total owned (bags + bank) line on item tooltips
+                sections = false, -- Sectioned inventory instead of category tabs (bags only, not the bank)
             },
             bags_skin = {
                 enabled = true -- Experimental retail-style bag window skin
