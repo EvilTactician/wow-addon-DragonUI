@@ -4,7 +4,7 @@
 
 ![Interface Version](https://img.shields.io/badge/Interface-30300-blue)
 ![WoW Version](https://img.shields.io/badge/WoW-3.3.5a-orange)
-[![Version](https://img.shields.io/badge/Version-3.2.14-green)](https://github.com/EvilTactician/wow-addon-DragonUI)
+[![Version](https://img.shields.io/badge/Version-3.2.15-green)](https://github.com/EvilTactician/wow-addon-DragonUI)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 
 **A modular, retail-inspired UI addon for World of Warcraft 3.3.5a (Wrath of the Lich King).**
@@ -65,6 +65,12 @@ It is developed and tested on an AzerothCore server with playerbots.
   waypoint or share it with your party, raid, battleground or guild.
 - **Minimap**: pings stay on the spot that was pinged as you move, and quest givers can
   show as plain marks or on DragonUI's shields.
+- **Sectioned bags**: an optional Bagster inventory layout that replaces the category
+  tabs with labelled sections (consumables and quest items on top, then equipment,
+  crafting, miscellaneous, and one slot counting your free space). Section titles fold
+  on click. Adapted from [NethanosGit's DragonUI_Extensions](https://github.com/NethanosGit/DragonUI_Extensions).
+- **Rogue poisons**: on servers running mod-class-tweaks, rogues can switch the realm's
+  poison auto-apply on or off for dungeons and raids, and optionally outside them.
 - **Talent plans**: follow a saved build while levelling. The talent window marks only
   the points the build still wants, as a red +N, and the marks disappear as you spend
   them.

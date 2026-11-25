@@ -1352,3 +1352,6 @@ L["not detected on this server"] = true
 L["Level %d-%d"] = true
 L[", best %s"] = true
 L["(%d player)"] = true
+
+-- Bagster sectioned inventory
+L["Crafting"] = true
