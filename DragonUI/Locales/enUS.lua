@@ -1355,3 +1355,9 @@ L["(%d player)"] = true
 
 -- Bagster sectioned inventory
 L["Crafting"] = true
+
+-- Talent reset without a trainer (talent window reset button, mod-class-tweaks)
+L["Reset Talents"] = true
+L["Unlearn all talents of your active specification. The cost is shown before anything changes."] = true
+L["You can't reset your talents in a battleground or arena."] = true
+L["You have no talents to reset."] = true

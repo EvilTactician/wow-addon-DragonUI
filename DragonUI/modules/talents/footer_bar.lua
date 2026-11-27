@@ -131,7 +131,10 @@ local function iconControl(footer, atlas, anchor, gap, tip, onClick)
     hit:SetSize(25, 25)
     hit:SetPoint("CENTER", art, "CENTER", 0, 0)
     hit:SetScript("OnClick", onClick)
-    hit:SetScript("OnEnter", function(self) ns.Tip(self, nil, { tip(), 1, 1, 1 }) end)
+    hit:SetScript("OnEnter", function(self)
+        local title, detail = tip()
+        if detail then ns.TitledTip(self, title, detail) else ns.Tip(self, nil, { title, 1, 1, 1 }) end
+    end)
     hit:SetScript("OnLeave", GameTooltip_Hide)
     hit.art = art
     return hit
@@ -172,8 +175,15 @@ function ns.BuildFooterControls(footer)
     local apply = buildApply(footer, search)
     buildActivate(footer, apply)
 
+    -- With nothing staged, realms running mod-class-tweaks reset the talents themselves (live_view.lua).
     bar.reset = iconControl(footer, "talents-button-reset", apply, 14,
-        function() return TALENT_TOOLTIP_RESETTALENTGROUP end, function() ns.ResetView() end)
+        function()
+            local ctx = ns.ViewContext()
+            if ns.StagedPoints(ctx) == 0 and ns.CanResetTalents(ctx) then
+                return L["Reset Talents"], L["Unlearn all talents of your active specification. The cost is shown before anything changes."]
+            end
+            return TALENT_TOOLTIP_RESETTALENTGROUP
+        end, function() ns.ResetButton() end)
     bar.undo = iconControl(footer, "talents-button-undo", bar.reset.art, 8,
         function() return L["Undo the last point"] end, function() ns.UndoLast() end)
 
@@ -223,7 +233,7 @@ function ns.UpdateFooter()
     end
 
     local icons = live and not edit
-    showIcon(bar.reset, icons, staged)
+    showIcon(bar.reset, icons, staged or ns.CanResetTalents(ctx))
     showIcon(bar.undo, icons, staged and ns.UndoDepth(ctx) > 0)
 
     bar.activate:SetShownCompat(browsing)

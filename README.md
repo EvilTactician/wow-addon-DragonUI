@@ -4,7 +4,7 @@
 
 ![Interface Version](https://img.shields.io/badge/Interface-30300-blue)
 ![WoW Version](https://img.shields.io/badge/WoW-3.3.5a-orange)
-[![Version](https://img.shields.io/badge/Version-3.2.15-green)](https://github.com/EvilTactician/wow-addon-DragonUI)
+[![Version](https://img.shields.io/badge/Version-3.2.16-green)](https://github.com/EvilTactician/wow-addon-DragonUI)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 
 **A modular, retail-inspired UI addon for World of Warcraft 3.3.5a (Wrath of the Lich King).**
@@ -71,6 +71,9 @@ It is developed and tested on an AzerothCore server with playerbots.
   on click. Adapted from [NethanosGit's DragonUI_Extensions](https://github.com/NethanosGit/DragonUI_Extensions).
 - **Rogue poisons**: on servers running mod-class-tweaks, rogues can switch the realm's
   poison auto-apply on or off for dungeons and raids, and optionally outside them.
+- **Talent reset anywhere**: on servers running mod-class-tweaks, the talent window's
+  reset button unlearns your active spec's talents without a trainer (after showing
+  the server's usual reset cost) when no points are staged.
 - **Talent plans**: follow a saved build while levelling. The talent window marks only
   the points the build still wants, as a red +N, and the marks disappear as you spend
   them.

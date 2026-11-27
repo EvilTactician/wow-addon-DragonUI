@@ -167,6 +167,68 @@ function ns.ResetView()
     ResetGroupPreviewTalentPoints(ctx.pet, ctx.group)
 end
 
+-- Talent reset without a trainer --------------------------------------------------------------------
+-- Realms running mod-class-tweaks unlearn the active spec's talents from here, at the trainer's cost
+-- (modules/classtweaks.lua). With nothing staged, the reset button asks for the cost, shows the stock
+-- confirmation with it, and only then sends the reset. Elsewhere the button stays preview-only.
+
+-- Own talents, active spec, at least one point spent, and the realm offers it.
+function ns.CanResetTalents(ctx)
+    local CT = addon.ClassTweaks
+    if not (CT and CT.TalentResetAvailable()) or not ctx.editable or ctx.pet then return false end
+    for tab = 1, GetNumTalentTabs(false, false) do
+        local _, _, spent = GetTalentTabInfo(tab, false, false, ctx.group)
+        if (spent or 0) > 0 then return true end
+    end
+    return false
+end
+
+-- The reset button: staged points are cleared as before; otherwise the realm resets the talents.
+function ns.ResetButton()
+    local ctx = ns.ViewContext()
+    if ns.StagedPoints(ctx) > 0 then
+        ns.ResetView()
+    elseif ns.CanResetTalents(ctx) then
+        addon.ClassTweaks.RequestTalentReset()
+    end
+end
+
+local function acceptTalentReset(_, cost)
+    local CT = addon.ClassTweaks
+    if CT then CT.ConfirmTalentReset(cost) end
+end
+
+ns.DefinePopup("DUI_TALENT_RESET", CONFIRM_TALENT_WIPE, ACCEPT, CANCEL,
+    { hasMoneyFrame = 1, OnAccept = acceptTalentReset }, "solo")
+ns.DefinePopup("DUI_TALENT_RESET_FREE", CONFIRM_TALENT_WIPE, ACCEPT, CANCEL,
+    { OnAccept = acceptTalentReset }, "solo")
+
+local RESET_ERRORS = {
+    COMBAT = ERR_NOT_IN_COMBAT,
+    DEAD = ERR_PLAYER_DEAD,
+    MONEY = ERR_NOT_ENOUGH_MONEY,
+    BATTLEGROUND = L["You can't reset your talents in a battleground or arena."],
+    NOTALENTS = L["You have no talents to reset."],
+}
+
+if addon.ClassTweaks then
+    addon.ClassTweaks.OnTalentReset(function(what, value)
+        if what == "COST" then
+            if value > 0 then
+                local dialog = StaticPopup_Show("DUI_TALENT_RESET", nil, nil, value)
+                if dialog then MoneyFrame_Update(dialog:GetName() .. "MoneyFrame", value) end
+            else
+                StaticPopup_Show("DUI_TALENT_RESET_FREE", nil, nil, value)
+            end
+        elseif what == "ERR" then
+            local text = RESET_ERRORS[value]
+            if text then UIErrorsFrame:AddMessage(text, 1, 0.1, 0.1, 1) end
+        elseif what == "AVAILABLE" then
+            ns.Refresh()
+        end
+    end)
+end
+
 -- Nodes: clicks and tooltips ----------------------------------------------------------------------
 
 function ns.NodeTooltip(node)
