@@ -411,8 +411,10 @@ function ns.LoadOntoCharacter(build)
     local group = ns.ActiveGroup()
     local needed = pointsMissing(build, data, group)
     if not needed then
-        -- Wrath cannot un-learn a point; a rank below the character's needs a trainer reset.
-        StaticPopup_Show("DUI_TALENT_NEEDS_RESET")
+        -- Wrath cannot un-learn a point; a rank below the character's needs a trainer reset, or the
+        -- reset button where the realm runs mod-class-tweaks (live_view.lua).
+        local CT = addon.ClassTweaks
+        StaticPopup_Show((CT and CT.TalentResetAvailable()) and "DUI_TALENT_NEEDS_RESET_HERE" or "DUI_TALENT_NEEDS_RESET")
         return
     end
     if needed == 0 then
@@ -442,4 +444,7 @@ end
 
 ns.DefinePopup("DUI_TALENT_NEEDS_RESET",
     L["This build conflicts with talents you've already spent.\n\nVisit your class trainer to reset your talents, then load the build again."],
+    OKAY, nil, nil, "dead")
+ns.DefinePopup("DUI_TALENT_NEEDS_RESET_HERE",
+    L["This build conflicts with talents you've already spent.\n\nReset your talents with the reset button next to Apply Changes, then load the build again."],
     OKAY, nil, nil, "dead")

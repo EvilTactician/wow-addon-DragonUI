@@ -1361,3 +1361,4 @@ L["Reset Talents"] = true
 L["Unlearn all talents of your active specification. The cost is shown before anything changes."] = true
 L["You can't reset your talents in a battleground or arena."] = true
 L["You have no talents to reset."] = true
+L["This build conflicts with talents you've already spent.\n\nReset your talents with the reset button next to Apply Changes, then load the build again."] = true
