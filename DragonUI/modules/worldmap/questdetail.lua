@@ -28,6 +28,9 @@ local COIN_ICON = "Interface\\Icons\\INV_Misc_Coin_02"
 local XP_ICON = addon._dir .. "WorldMap\\xp_icon"
 -- The band's carving sits a little low in its cell, so the word follows it down.
 local LABEL_DROP = 2
+-- Journal: Gear Guide's upgrade arrow: an item on your gear list that's an upgrade for your spec (its own answer,
+-- through its public JournalGearGuide.ShowsArrow). Only drawn while that addon is loaded, so its texture is there.
+local UPGRADE_ARROW = "Interface\\AddOns\\JournalGearGuide\\Textures\\UpgradeArrowSmall"
 
 local detail, body, scroll, footer
 local questIndex, questID
@@ -58,6 +61,12 @@ local function acquireReward(pool, index)
     button.ring:SetTexCoord(12 / 64, 51 / 64, 12 / 64, 51 / 64)
     button.ring:SetPoint("TOPLEFT", button.icon, "TOPLEFT", -2, 2)
     button.ring:SetPoint("BOTTOMRIGHT", button.icon, "BOTTOMRIGHT", 2, -2)
+    button.upgrade = button:CreateTexture(nil, "OVERLAY")
+    button.upgrade:SetDrawLayer("OVERLAY", 7)
+    button.upgrade:SetSize(16, 16)
+    button.upgrade:SetPoint("TOPLEFT", button.icon, "TOPLEFT", 1, -1)
+    button.upgrade:SetTexture(UPGRADE_ARROW)
+    button.upgrade:Hide()
     button.count = button:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
     button.count:SetPoint("BOTTOMRIGHT", button.icon, "BOTTOMRIGHT", -2, 2)
     button.name = button:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -91,6 +100,10 @@ local function dressReward(button, kind, slot, name, texture, count, quality)
         button.name:SetTextColor(1, 1, 1)
     end
     button.count:SetText(count and count > 1 and count or "")
+    local gearGuide = _G.JournalGearGuide
+    local link = kind ~= "spell" and type(gearGuide) == "table" and type(gearGuide.ShowsArrow) == "function"
+        and GetQuestLogItemLink(kind, slot)
+    if link and gearGuide.ShowsArrow(link) then button.upgrade:Show() else button.upgrade:Hide() end
     button:Show()
 end
 

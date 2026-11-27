@@ -4,7 +4,7 @@ local addon = select(2, ...)
 local TM = addon.TalentModule
 local ns = TM.ns
 
--- Public talent-build API for other addons (e.g. JournalGearBIS saving its recommended builds).
+-- Public talent-build API for other addons (e.g. JournalGearGuide saving its recommended builds).
 -- Kept small and stable on purpose: callers rely on DragonUI.API, never on DragonUI's internals.
 -- Saved builds land in the same storage as imported ones, so they can be renamed, edited,
 -- deleted, shared and followed as a plan like any other.
