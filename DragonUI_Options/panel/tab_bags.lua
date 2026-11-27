@@ -940,7 +940,7 @@ local function BuildBagsTab(scroll)
 
     C:AddToggle(tabSection, {
         label = LO["Sectioned Layout"],
-        desc = LO["Show the inventory split into sections instead of using the category tabs: Hearthstone, Potion, Food, Consumable, Devices and Quest on top, then Equipment (Armor, Weapon, Trinket), Crafting, Miscellaneous and Empty. Click a section title to fold it. The rarity filter and search stay; the bank is not changed."],
+        desc = LO["Show the inventory split into sections instead of using the category tabs: Hearthstone, Potion, Food, Consumable, Ammo, Devices and Quest on top, then Equipment (Armor, Weapon, Trinket), Crafting, Miscellaneous and Empty. Click a section title to fold it. The rarity filter and search stay; the bank is not changed."],
         getFunc = function() return IsSectioned() end,
         setFunc = function(val)
             if addon.SetBagsterSections then

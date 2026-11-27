@@ -1906,7 +1906,7 @@ L["Your rate is %s."] = true
 
 -- Bagster sectioned inventory (Bags tab)
 L["Sectioned Layout"] = true
-L["Show the inventory split into sections instead of using the category tabs: Hearthstone, Potion, Food, Consumable, Devices and Quest on top, then Equipment (Armor, Weapon, Trinket), Crafting, Miscellaneous and Empty. Click a section title to fold it. The rarity filter and search stay; the bank is not changed."] = true
+L["Show the inventory split into sections instead of using the category tabs: Hearthstone, Potion, Food, Consumable, Ammo, Devices and Quest on top, then Equipment (Armor, Weapon, Trinket), Crafting, Miscellaneous and Empty. Click a section title to fold it. The rarity filter and search stay; the bank is not changed."] = true
 
 -- Rogue poisons (Enhancements tab, mod-class-tweaks)
 L["Rogue Poisons"] = true

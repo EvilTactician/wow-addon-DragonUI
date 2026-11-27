@@ -4,7 +4,7 @@
 
 -- Sectioned inventory (optional, off by default): replaces the inventory's category tabs with one view
 -- where the items are split into labelled sections: a top row (Hearthstone, Potion, Food, Consumable,
--- Devices, Quest), then Equipment (Armor, Weapon, Trinket), Crafting, Miscellaneous, and Empty (one slot
+-- Ammo, Devices, Quest), then Equipment (Armor, Weapon, Trinket), Crafting, Miscellaneous, and Empty (one slot
 -- showing how many are free). Section titles fold on click. The rarity filter, search and bag column stay.
 -- Inventory only; the bank keeps its tabs. Stored as modules.bagster.sections (+ sections_collapsed).
 local addon = select(2, ...)
@@ -147,11 +147,13 @@ local function Labels()
     local L = addon.L
     local enUS = (GetLocale() == "enUS")
     local consumables = { GetAuctionItemSubClasses(4) }
+    local projectile = select(7, GetAuctionItemClasses())
     labels = {
         hearth     = GetItemInfo(HEARTHSTONE_ID) or "Hearthstone",
         potion     = enUS and "Potion" or consumables[2] or "Potion",
         food       = enUS and "Food" or consumables[1] or "Food",
         consumable = mod.L.Consumable or "Consumable",
+        ammo       = AMMOSLOT or "Ammo",
         devices    = mod.L.Devices or "Devices",
         quest      = mod.L.Quest or "Quest",
         equipment  = mod.GetSetDisplayName("Equipment"),
@@ -168,6 +170,8 @@ local function Labels()
     -- Names GetItemInfo reports for the consumable subtypes that get their own column.
     labels.potionSub = { Potion = true, [consumables[2] or "Potion"] = true }
     labels.foodSub = { ["Food & Drink"] = true, [consumables[1] or "Food & Drink"] = true }
+    -- Arrows and bullets (item class "Projectile").
+    labels.projectileType = projectile or "Projectile"
     return labels
 end
 
@@ -196,6 +200,8 @@ local function Classify(link)
         return "weapon"
     elseif itype == mod.L.Gem then
         return "gem"
+    elseif itype == L.projectileType then
+        return "ammo"
     elseif itype == mod.L.Recipe then
         return "recipe"
     end
@@ -368,7 +374,7 @@ local function Flow(self, sections, s, size, width, apply, placed)
 end
 
 local SECTION_DEFS = {
-    { "top", nil, false, { { "hearth" }, { "potion" }, { "food" }, { "consumable" }, { "devices" }, { "quest" } } },
+    { "top", nil, false, { { "hearth" }, { "potion" }, { "food" }, { "consumable" }, { "ammo" }, { "devices" }, { "quest" } } },
     { "equipment", "equipment", true, { { "armor" }, { "weapon" }, { "trinket" } } },
     { "crafting", "crafting", true, { { "tradegood" }, { "gem" }, { "recipe" } } },
     { "misc", "misc", true, { { "misc", false } } },
